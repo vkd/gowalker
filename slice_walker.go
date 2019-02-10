@@ -54,3 +54,28 @@ func (s SliceStringsSourceMapStrings) Get(key string) ([]string, bool, error) {
 func (s SliceStringsSourceMapStrings) StringSource() StringSource {
 	return StringSourceMapStringsByFirst(s)
 }
+
+// SliceStringsSourceFunc - func implement SliceStringSource
+type SliceStringsSourceFunc func(key string) ([]string, bool, error)
+
+var _ SliceStringsSource = SliceStringsSourceFunc(nil)
+
+// Get value from source
+func (fn SliceStringsSourceFunc) Get(key string) ([]string, bool, error) {
+	return fn(key)
+}
+
+// StringSource - return string source
+func (fn SliceStringsSourceFunc) StringSource() StringSource {
+	return StringSourceFunc(func(key string) (string, bool, error) {
+		ss, ok, err := fn(key)
+		if err != nil || !ok {
+			return "", ok, err
+		}
+		var s string
+		if len(ss) > 0 {
+			s = ss[0]
+		}
+		return s, true, nil
+	})
+}

@@ -42,6 +42,8 @@ func ExampleWalk_ginBinding() {
 		Name    string   `uri:"name"`
 		Age     int      `uri:"age,default=25"`
 		Friends []string `uri:"friends"`
+		Coins   []int    `uri:"coins,default=40"`
+		Keys    []int
 	}
 
 	uri := map[string][]string{
@@ -55,5 +57,5 @@ func ExampleWalk_ginBinding() {
 
 	err := gowalker.Walk(&q, w)
 	fmt.Printf("uri: %#v, %v", q, err)
-	// Output: uri: struct { Name string "uri:\"name\""; Age int "uri:\"age,default=25\""; Friends []string "uri:\"friends\"" }{Name:"mike", Age:25, Friends:[]string{"igor", "alisa"}}, <nil>
+	// Output: uri: struct { Name string "uri:\"name\""; Age int "uri:\"age,default=25\""; Friends []string "uri:\"friends\""; Coins []int "uri:\"coins,default=40\""; Keys []int }{Name:"mike", Age:25, Friends:[]string{"igor", "alisa"}, Coins:[]int{40}, Keys:[]int(nil)}, <nil>
 }
