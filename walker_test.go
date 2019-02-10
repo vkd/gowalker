@@ -12,7 +12,7 @@ func TestWalkBaseStruct(t *testing.T) {
 		ID   *struct {
 			Number int
 		}
-		sex string
+		sex string // nolint: unused
 	}
 	fn := func(value reflect.Value, field reflect.StructField) (bool, error) {
 		return false, nil
