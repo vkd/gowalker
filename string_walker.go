@@ -3,6 +3,8 @@ package gowalker
 import (
 	"os"
 	"reflect"
+
+	"github.com/vkd/gowalker/setters"
 )
 
 // StringSource - source of values by string
@@ -16,7 +18,7 @@ func StringWalkerStep(tag string, source StringSource, value reflect.Value, fiel
 	if err != nil || !ok {
 		return ok, err
 	}
-	return true, SetValueByString(value, field, str)
+	return true, setters.SetValueByString(value, field, str)
 }
 
 // StringGetValue - get string value from field

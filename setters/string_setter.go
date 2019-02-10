@@ -1,4 +1,4 @@
-package gowalker
+package setters
 
 import (
 	"encoding/json"
@@ -8,41 +8,27 @@ import (
 	"time"
 )
 
-// ErrUnknownKind - unknown kind of value
-var ErrUnknownKind = errors.New("unknown kind")
-
-// ErrNotSupportKind - kind not support to set by string
-var ErrNotSupportKind = errors.New("not support kind")
-
-// ErrNotImplemented - not implemented yet functionality
-var ErrNotImplemented = errors.New("not implemented")
-
-// SetValueBySliceOfString - set value by slice of strings
-//
-// Support multi values only: Slice, Array
-// other kindes setted by string (first value from slice)
-func SetValueBySliceOfString(value reflect.Value, field reflect.StructField, strs []string) error {
-	switch value.Kind() {
-	case reflect.Slice:
-		return sliceStringSetter(value, field, strs)
-	case reflect.Array:
-		return arrayStringSetter(value, field, strs)
-	default:
-		var str string
-		if len(strs) > 0 {
-			str = strs[0]
-		}
-		return SetValueByString(value, field, str)
-	}
-}
+var (
+	// ErrNotSupportKind - kind not support to set by string
+	ErrNotSupportKind = errors.New("not support kind")
+	// ErrNotImplemented - not implemented yet functionality
+	ErrNotImplemented = errors.New("not implemented")
+	// ErrNotSettedField - field cannot be set
+	ErrNotSettedField = errors.New("cannot be set")
+)
 
 // SetValueByString - set value by string
 //
 // Not implemented kinds: Complex, Chan
 func SetValueByString(value reflect.Value, field reflect.StructField, str string) error { // nolint: gocyclo
+	if !value.CanSet() {
+		return ErrNotSettedField
+	}
+
 	switch value.Kind() {
 	case reflect.Bool:
 		return boolStringSetter(value, field, str)
+
 	// Int
 	case reflect.Int:
 		return int0StrSetter(value, field, str)
@@ -83,6 +69,7 @@ func SetValueByString(value reflect.Value, field reflect.StructField, str string
 	case reflect.Complex128:
 		return ErrNotImplemented
 
+	// Other
 	case reflect.Array:
 		return arrayStringSetter(value, field, []string{str})
 
@@ -94,7 +81,7 @@ func SetValueByString(value reflect.Value, field reflect.StructField, str string
 
 	case reflect.Ptr:
 		if value.IsNil() {
-			value.Set(reflect.New(value.Type().Elem()).Elem())
+			value.Set(reflect.New(value.Type().Elem()))
 		}
 		return SetValueByString(value.Elem(), field, str)
 
@@ -112,15 +99,12 @@ func SetValueByString(value reflect.Value, field reflect.StructField, str string
 		}
 		return json.Unmarshal([]byte(str), value.Addr().Interface())
 
-	case
-		reflect.Uintptr,
-		reflect.Func,
-		reflect.Interface,
-		reflect.UnsafePointer:
-		return ErrNotSupportKind
-
 	default:
-		return ErrUnknownKind
+		// reflect.Uintptr,
+		// reflect.Func,
+		// reflect.Interface,
+		// reflect.UnsafePointer:
+		return ErrNotSupportKind
 	}
 }
 

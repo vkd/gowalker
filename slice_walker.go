@@ -2,6 +2,8 @@ package gowalker
 
 import (
 	"reflect"
+
+	"github.com/vkd/gowalker/setters"
 )
 
 // SliceStringsSource - source of values by slice of strings
@@ -34,7 +36,7 @@ func SliceStringsWalkerStep(tag string, source SliceStringsSource, value reflect
 		if err != nil || !ok {
 			return ok, err
 		}
-		return true, SetValueBySliceOfString(value, field, ss)
+		return true, setters.SetValueBySliceOfString(value, field, ss)
 	}
 	return StringWalkerStep(tag, source.StringSource(), value, field)
 }
