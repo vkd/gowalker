@@ -7,6 +7,13 @@ import (
 	"github.com/vkd/gowalker/setters"
 )
 
+// NewStringWalker - simple string walker
+func NewStringWalker(tag string, source StringSource) Walker {
+	return WalkerFunc(func(value reflect.Value, field reflect.StructField) (bool, error) {
+		return StringWalkerStep(tag, source, value, field)
+	})
+}
+
 // StringSource - source of values by string
 type StringSource interface {
 	Get(key string) (value string, ok bool, err error)
@@ -75,3 +82,8 @@ var EnvStringSource = StringSourceFunc(func(key string) (string, bool, error) {
 	v, ok := os.LookupEnv(key)
 	return v, ok, nil
 })
+
+// NewEnvWalker - walker from env
+func NewEnvWalker(tag string) Walker {
+	return NewStringWalker(tag, EnvStringSource)
+}

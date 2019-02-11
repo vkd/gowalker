@@ -24,9 +24,7 @@ func ExampleWalk_upperConfigEnv() {
 	}
 
 	w := gowalker.NewWrapFieldNameWalkerConv(
-		gowalker.WalkerFunc(func(value reflect.Value, field reflect.StructField) (bool, error) {
-			return gowalker.StringWalkerStep("config", gowalker.StringSourceMapString(env), value, field)
-		}),
+		gowalker.NewStringWalker("config", gowalker.StringSourceMapString(env)),
 		func(fields []string) string {
 			return strings.ToUpper(strings.Join(fields, "_"))
 		},
