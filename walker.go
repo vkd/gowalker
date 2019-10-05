@@ -1,12 +1,17 @@
 package gowalker
 
 import (
+	"errors"
 	"reflect"
 )
 
 // Walk - walk struct by all public fields
 func Walk(value interface{}, walker Walker) error {
-	_, err := walk(reflect.ValueOf(value), emptyField, walker)
+	v := reflect.ValueOf(value)
+	if v.Kind() != reflect.Ptr {
+		return errors.New("unsupported type for value: allowed only ptr")
+	}
+	_, err := walkPrt(v, emptyField, walker)
 	return err
 }
 
