@@ -35,6 +35,10 @@ func (f WalkerFunc) Step(value reflect.Value, field reflect.StructField) (bool, 
 }
 
 func walk(value reflect.Value, field reflect.StructField, walker Walker) (bool, error) {
+	if !value.CanSet() {
+		return false, nil
+	}
+
 	kind := value.Kind()
 	if kind == reflect.Ptr {
 		return walkPrt(value, field, walker)
