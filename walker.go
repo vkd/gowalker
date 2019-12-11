@@ -7,11 +7,7 @@ import (
 
 // Walk - walk struct by all public fields
 func Walk(value interface{}, walker Walker) error {
-	v := reflect.ValueOf(value)
-	if v.Kind() != reflect.Ptr {
-		return errors.New("unsupported type for value: allowed only ptr")
-	}
-	_, err := walkPrt(v, emptyField, walker)
+	_, err := walkIface(value, walker)
 	return err
 }
 
@@ -32,6 +28,14 @@ type WalkerFunc func(value reflect.Value, field reflect.StructField) (bool, erro
 // Step - one step of walker
 func (f WalkerFunc) Step(value reflect.Value, field reflect.StructField) (bool, error) {
 	return f(value, field)
+}
+
+func walkIface(value interface{}, walker Walker) (bool, error) {
+	v := reflect.ValueOf(value)
+	if v.Kind() != reflect.Ptr {
+		return false, errors.New("unsupported type for value: allowed only ptr")
+	}
+	return walkPrt(v, emptyField, walker)
 }
 
 func walk(value reflect.Value, field reflect.StructField, walker Walker) (bool, error) {
