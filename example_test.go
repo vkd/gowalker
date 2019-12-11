@@ -57,3 +57,100 @@ func ExampleWalk_ginBinding() {
 	fmt.Printf("uri: %#v, %v", q, err)
 	// Output: uri: struct { Name string "uri:\"name\""; Age int "uri:\"age,default=25\""; Friends []string "uri:\"friends\""; Coins []int "uri:\"coins,default=40\""; Keys []int }{Name:"mike", Age:25, Friends:[]string{"igor", "alisa"}, Coins:[]int{40}, Keys:[]int(nil)}, <nil>
 }
+
+func ExampleWalk_WalkWithMapSource() {
+	var cfg struct {
+		Name string
+		DB   struct {
+			Type       string
+			PortNumber int    `config:"PORT"`
+			Username   string `config:",default=dbuser"`
+		}
+	}
+
+	m := map[string]string{
+		"NAME":    "service",
+		"DB_TYPE": "postgres",
+		"PORT":    "9000",
+	}
+
+	w := gowalker.NewWrapFieldNameWalkerConv(
+		gowalker.NewStringWalker(
+			"config",
+			gowalker.StringSourceMapString(m),
+		),
+		func(ss []string) string {
+			return strings.ToUpper(strings.Join(ss, "_"))
+		},
+	)
+	err := gowalker.Walk(&cfg, w)
+	fmt.Printf("cfg: %v, %v", cfg, err)
+	// Output: cfg: {service {postgres 9000 dbuser}}, <nil>
+}
+
+// var osLookupEnv = os.LookupEnv
+var osLookupEnv = func(key string) (string, bool) {
+	v, ok := map[string]string{
+		"NAME":    "Env",
+		"DB_URL":  "postgres",
+		"DB_PORT": "5432",
+	}[key]
+	return v, ok
+}
+
+func ExampleWalk_ServiceEnvLoader() {
+	type config struct {
+		ServiceName string `env:"NAME"`
+		Port        int    `env:"PORT,default=8001"`
+		DB          struct {
+			Address string `env:"DB_URL"`
+			Port    int    // DB_PORT
+		}
+	}
+
+	var c config
+	w := gowalker.NewWrapFieldNameWalkerConv(
+		gowalker.NewStringWalker(
+			"env",
+			gowalker.StringSourceFunc(func(key string) (string, bool, error) {
+				v, ok := osLookupEnv(key)
+				return v, ok, nil
+			}),
+		),
+		func(ss []string) string {
+			return strings.ToUpper(strings.Join(ss, "_"))
+		},
+	)
+	err := gowalker.Walk(&c, w)
+	fmt.Printf("env: %v, %v", c, err)
+	// Output: env: {Env 8001 {postgres 5432}}, <nil>
+}
+
+type visitedFields []string
+
+func (f *visitedFields) Step(value reflect.Value, field reflect.StructField) (set bool, err error) {
+	*f = append(*f, field.Name)
+	return false, nil
+}
+
+func ExampleWalk_CollectAllPublicFields() {
+	var config struct {
+		Name string
+		Port int
+		DB   struct {
+			URL  string
+			Port int
+		}
+	}
+
+	var fs visitedFields
+	w := gowalker.NewWrapFieldNameWalkerConv(
+		&fs,
+		func(ss []string) string {
+			return strings.ToLower(strings.Join(ss, "-"))
+		},
+	)
+	err := gowalker.Walk(&config, w)
+	fmt.Printf("fields: %v, %v", fs, err)
+	// Output: fields: [name port db db-url db-port], <nil>
+}
