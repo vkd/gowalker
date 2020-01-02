@@ -97,7 +97,7 @@ func TestWalkWrap(t *testing.T) {
 		"Document_ID_Number": 1,
 	}
 
-	err := Walk(&s, NewWrapFieldNameWalker(WalkerFunc(fn)))
+	err := WalkFullname(&s, WalkerFunc(fn), ConcatNamer)
 	if err != nil {
 		t.Errorf("Not expected error: %v", err)
 	}

@@ -1,7 +1,6 @@
 package gowalker_test
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/vkd/gowalker"
@@ -74,16 +73,11 @@ func BenchmarkWalk_Wrap(b *testing.B) {
 		"DB_PORT": "9000",
 	}
 
-	w := gowalker.NewWrapFieldNameWalkerConv(
-		gowalker.NewStringWalker("config", gowalker.StringSourceMapString(env)),
-		func(fields []string) string {
-			return strings.ToUpper(strings.Join(fields, "_"))
-		},
-	)
+	w := gowalker.NewStringWalker("config", gowalker.StringSourceMapString(env))
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		err := gowalker.Walk(&cfg, w)
+		err := gowalker.WalkFullname(&cfg, w, gowalker.UpperNamer)
 		if err != nil {
 			b.Fatalf("Error on walk: %v", err)
 		}
@@ -107,14 +101,9 @@ func BenchmarkWalk_MapSource_Wrap(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		w := gowalker.NewWrapFieldNameWalkerConv(
-			gowalker.NewStringWalker("config", gowalker.StringSourceMapString(env)),
-			func(fields []string) string {
-				return strings.ToUpper(strings.Join(fields, "_"))
-			},
-		)
+		w := gowalker.NewStringWalker("config", gowalker.StringSourceMapString(env))
 
-		err := gowalker.Walk(&cfg, w)
+		err := gowalker.WalkFullname(&cfg, w, gowalker.UpperNamer)
 		if err != nil {
 			b.Fatalf("Error on walk: %v", err)
 		}

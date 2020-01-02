@@ -3,7 +3,6 @@ package gowalker_test
 import (
 	"fmt"
 	"reflect"
-	"strings"
 
 	"github.com/vkd/gowalker"
 )
@@ -23,14 +22,8 @@ func ExampleWalk_upperConfigEnv() {
 		"DB_PORT": "9000",
 	}
 
-	w := gowalker.NewWrapFieldNameWalkerConv(
-		gowalker.NewStringWalker("config", gowalker.StringSourceMapString(env)),
-		func(fields []string) string {
-			return strings.ToUpper(strings.Join(fields, "_"))
-		},
-	)
+	err := gowalker.StructFullname(&cfg, "config", gowalker.StringSourceMapString(env), gowalker.UpperNamer)
 
-	err := gowalker.Walk(&cfg, w)
 	fmt.Printf("cfg: %#v, %v", cfg, err)
 	// Output: cfg: struct { Name string; DB struct { Type string; Port int } }{Name:"service", DB:struct { Type string; Port int }{Type:"postgres", Port:9000}}, <nil>
 }
@@ -74,16 +67,11 @@ func ExampleWalk_WalkWithMapSource() {
 		"PORT":    "9000",
 	}
 
-	w := gowalker.NewWrapFieldNameWalkerConv(
-		gowalker.NewStringWalker(
-			"config",
-			gowalker.StringSourceMapString(m),
-		),
-		func(ss []string) string {
-			return strings.ToUpper(strings.Join(ss, "_"))
-		},
+	w := gowalker.NewStringWalker(
+		"config",
+		gowalker.StringSourceMapString(m),
 	)
-	err := gowalker.Walk(&cfg, w)
+	err := gowalker.WalkFullname(&cfg, w, gowalker.UpperNamer)
 	fmt.Printf("cfg: %v, %v", cfg, err)
 	// Output: cfg: {service {postgres 9000 dbuser}}, <nil>
 }
@@ -109,19 +97,14 @@ func ExampleWalk_ServiceEnvLoader() {
 	}
 
 	var c config
-	w := gowalker.NewWrapFieldNameWalkerConv(
-		gowalker.NewStringWalker(
-			"env",
-			gowalker.StringSourceFunc(func(key string) (string, bool, error) {
-				v, ok := osLookupEnv(key)
-				return v, ok, nil
-			}),
-		),
-		func(ss []string) string {
-			return strings.ToUpper(strings.Join(ss, "_"))
-		},
+	w := gowalker.NewStringWalker(
+		"env",
+		gowalker.StringSourceFunc(func(key string) (string, bool, error) {
+			v, ok := osLookupEnv(key)
+			return v, ok, nil
+		}),
 	)
-	err := gowalker.Walk(&c, w)
+	err := gowalker.WalkFullname(&c, w, gowalker.UpperNamer)
 	fmt.Printf("env: %v, %v", c, err)
 	// Output: env: {Env 8001 {postgres 5432}}, <nil>
 }
@@ -144,13 +127,7 @@ func ExampleWalk_CollectAllPublicFields() {
 	}
 
 	var fs visitedFields
-	w := gowalker.NewWrapFieldNameWalkerConv(
-		&fs,
-		func(ss []string) string {
-			return strings.ToLower(strings.Join(ss, "-"))
-		},
-	)
-	err := gowalker.Walk(&config, w)
+	err := gowalker.WalkFullname(&config, &fs, gowalker.DashToLoverNamer)
 	fmt.Printf("fields: %v, %v", fs, err)
 	// Output: fields: [name port db db-url db-port], <nil>
 }

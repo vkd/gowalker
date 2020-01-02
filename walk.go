@@ -5,15 +5,25 @@ import (
 	"reflect"
 )
 
-func walkIface(value interface{}, walker Walker) (bool, error) {
+// Walker - interface to walk through struct fields
+type Walker interface {
+	Step(value reflect.Value, field reflect.StructField) (bool, error)
+}
+
+// Namer - interface to get a full field name.
+type Namer interface {
+	FieldName(parent, name string) string
+}
+
+func walkIface(value interface{}, walker Walker, namer Namer) (bool, error) {
 	v := reflect.ValueOf(value)
 	if v.Kind() != reflect.Ptr {
 		return false, errors.New("unsupported type for value: allowed only ptr")
 	}
-	return walkPrt(v, emptyField, walker)
+	return walkPrt(v, structField{namer: namer}, walker)
 }
 
-func walk(value reflect.Value, field reflect.StructField, walker Walker) (bool, error) {
+func walk(value reflect.Value, field structField, walker Walker) (bool, error) {
 	if !value.CanSet() {
 		return false, nil
 	}
@@ -23,8 +33,8 @@ func walk(value reflect.Value, field reflect.StructField, walker Walker) (bool, 
 		return walkPrt(value, field, walker)
 	}
 
-	if !isEmptyField(field) {
-		ok, err := walker.Step(value, field)
+	if !isEmptyField(field.field) {
+		ok, err := walker.Step(value, field.field)
 		if err != nil {
 			return false, err
 		}
@@ -40,7 +50,7 @@ func walk(value reflect.Value, field reflect.StructField, walker Walker) (bool, 
 	return false, nil
 }
 
-func walkPrt(value reflect.Value, field reflect.StructField, walker Walker) (setted bool, err error) {
+func walkPrt(value reflect.Value, field structField, walker Walker) (setted bool, err error) {
 	isCreateNew := value.IsNil()
 
 	vPtr := value
@@ -57,7 +67,7 @@ func walkPrt(value reflect.Value, field reflect.StructField, walker Walker) (set
 	return setted, nil
 }
 
-func walkStruct(value reflect.Value, field reflect.StructField, walker Walker) (setted bool, err error) {
+func walkStruct(value reflect.Value, field structField, walker Walker) (setted bool, err error) {
 	tp := value.Type()
 
 	var isStructSetted bool
@@ -65,12 +75,8 @@ func walkStruct(value reflect.Value, field reflect.StructField, walker Walker) (
 		if !value.Field(i).CanSet() {
 			continue
 		}
-		var nextW = walker
-		if ww, ok := walker.(Wrapper); ok && !isEmptyField(field) {
-			nextW = ww.Wrap(field)
-		}
 		tField := tp.Field(i)
-		setted, err := walk(value.Field(i), tField, nextW)
+		setted, err := walk(value.Field(i), field.Child(tField), walker)
 		if err != nil {
 			return false, err
 		}
@@ -83,4 +89,19 @@ var emptyField = reflect.StructField{}
 
 func isEmptyField(field reflect.StructField) bool {
 	return field.Name == emptyField.Name
+}
+
+type structField struct {
+	field reflect.StructField
+
+	namer Namer
+}
+
+func (f structField) Child(c reflect.StructField) structField {
+	if f.namer != nil {
+		c.Name = f.namer.FieldName(f.field.Name, c.Name)
+	}
+
+	f.field = c
+	return f
 }
