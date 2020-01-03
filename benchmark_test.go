@@ -77,7 +77,7 @@ func BenchmarkWalk_Wrap(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		err := gowalker.WalkFullname(&cfg, w, gowalker.UpperNamer)
+		err := gowalker.WalkFullname(&cfg, w, gowalker.ConcatNamer)
 		if err != nil {
 			b.Fatalf("Error on walk: %v", err)
 		}
@@ -103,7 +103,7 @@ func BenchmarkWalk_MapSource_Wrap(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		w := gowalker.NewStringWalker("config", gowalker.StringSourceMapString(env))
 
-		err := gowalker.WalkFullname(&cfg, w, gowalker.UpperNamer)
+		err := gowalker.WalkFullname(&cfg, w, gowalker.ConcatNamer)
 		if err != nil {
 			b.Fatalf("Error on walk: %v", err)
 		}
