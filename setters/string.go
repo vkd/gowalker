@@ -110,7 +110,7 @@ func SetString(value reflect.Value, field reflect.StructField, str string) error
 
 type stringSetterFunc func(value reflect.Value, field reflect.StructField, str string) error
 
-func boolStringSetter(value reflect.Value, field reflect.StructField, s string) error {
+func boolStringSetter(value reflect.Value, _ reflect.StructField, s string) error {
 	if s == "" {
 		s = "false"
 	}
@@ -123,7 +123,7 @@ func boolStringSetter(value reflect.Value, field reflect.StructField, s string) 
 }
 
 func intStringSetterFunc(bitSize int) stringSetterFunc {
-	return func(value reflect.Value, field reflect.StructField, s string) error {
+	return func(value reflect.Value, _ reflect.StructField, s string) error {
 		if s == "" {
 			s = "0"
 		}
@@ -144,7 +144,7 @@ var (
 	int64StrSetter = intStringSetterFunc(64)
 )
 
-func timeDurationStringSetter(value reflect.Value, field reflect.StructField, s string) error {
+func timeDurationStringSetter(value reflect.Value, _ reflect.StructField, s string) error {
 	d, err := time.ParseDuration(s)
 	if err != nil {
 		return err
@@ -154,7 +154,7 @@ func timeDurationStringSetter(value reflect.Value, field reflect.StructField, s 
 }
 
 func uintStringSetterFunc(bitSize int) stringSetterFunc {
-	return func(value reflect.Value, field reflect.StructField, s string) error {
+	return func(value reflect.Value, _ reflect.StructField, s string) error {
 		if s == "" {
 			s = "0"
 		}
@@ -176,7 +176,7 @@ var (
 )
 
 func floatStringSetterFunc(bitSize int) stringSetterFunc {
-	return func(value reflect.Value, field reflect.StructField, s string) error {
+	return func(value reflect.Value, _ reflect.StructField, s string) error {
 		if s == "" {
 			s = "0.0"
 		}
