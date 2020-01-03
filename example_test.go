@@ -42,11 +42,7 @@ func ExampleWalk_ginBinding() {
 		"friends": {"igor", "alisa"},
 	}
 
-	w := gowalker.WalkerFunc(func(value reflect.Value, field reflect.StructField) (bool, error) {
-		return gowalker.SliceStringsWalkerStep("uri", gowalker.SliceStringsSourceMapStrings(uri), value, field)
-	})
-
-	err := gowalker.Walk(&q, w)
+	err := gowalker.Struct(&q, "uri", gowalker.SliceStringsSourceMapStrings(uri))
 	fmt.Printf("uri: %#v, %v", q, err)
 	// Output: uri: struct { Name string "uri:\"name\""; Age int "uri:\"age,default=25\""; Friends []string "uri:\"friends\""; Coins []int "uri:\"coins,default=40\""; Keys []int }{Name:"mike", Age:25, Friends:[]string{"igor", "alisa"}, Coins:[]int{40}, Keys:[]int(nil)}, <nil>
 }

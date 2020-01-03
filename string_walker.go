@@ -9,6 +9,11 @@ import (
 
 // NewStringWalker - simple string walker
 func NewStringWalker(tag string, source StringSource) Walker {
+	if ss, ok := source.(SliceStringsSource); ok {
+		return WalkerFunc(func(value reflect.Value, field reflect.StructField) (bool, error) {
+			return SliceStringsWalkerStep(tag, ss, value, field)
+		})
+	}
 	return WalkerFunc(func(value reflect.Value, field reflect.StructField) (bool, error) {
 		return StringWalkerStep(tag, source, value, field)
 	})
@@ -51,22 +56,6 @@ type StringSourceMapString map[string]string
 func (s StringSourceMapString) Get(key string) (string, bool, error) {
 	v, ok := s[key]
 	return v, ok, nil
-}
-
-// StringSourceMapStringsByFirst - map[string][]string implement StringSource
-type StringSourceMapStringsByFirst map[string][]string
-
-// Get value from source
-func (s StringSourceMapStringsByFirst) Get(key string) (string, bool, error) {
-	vs, ok := s[key]
-	if !ok {
-		return "", false, nil
-	}
-	var v string
-	if len(vs) > 0 {
-		v = vs[0]
-	}
-	return v, true, nil
 }
 
 // StringSourceFunc - function implement string source

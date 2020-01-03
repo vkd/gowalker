@@ -8,14 +8,14 @@ import (
 
 // SliceStringsSource - source of values by slice of strings
 type SliceStringsSource interface {
-	Get(key string) (value []string, ok bool, err error)
-	StringSource() StringSource
+	StringSource
+	GetStrings(key string) (value []string, ok bool, err error)
 }
 
 // SliceStringGetValue - get value from field for slice of strings
 func SliceStringGetValue(tag string, source SliceStringsSource, field reflect.StructField) ([]string, bool, error) {
 	t := TagStringParse(field, tag)
-	ss, ok, err := source.Get(t.Value)
+	ss, ok, err := source.GetStrings(t.Value)
 	if err != nil {
 		return nil, false, err
 	}
@@ -38,21 +38,21 @@ func SliceStringsWalkerStep(tag string, source SliceStringsSource, value reflect
 		}
 		return true, setters.SetValueBySliceOfString(value, field, ss)
 	}
-	return StringWalkerStep(tag, source.StringSource(), value, field)
+	return StringWalkerStep(tag, source, value, field)
 }
 
 // SliceStringsSourceMapStrings - map[string][]string implement SliceStringsSource
 type SliceStringsSourceMapStrings map[string][]string
 
 // Get value from source
-func (s SliceStringsSourceMapStrings) Get(key string) ([]string, bool, error) {
+func (s SliceStringsSourceMapStrings) GetStrings(key string) ([]string, bool, error) {
 	v, ok := s[key]
 	return v, ok, nil
 }
 
-// StringSource - return string source
-func (s SliceStringsSourceMapStrings) StringSource() StringSource {
-	return StringSourceMapStringsByFirst(s)
+// Get value from source
+func (s SliceStringsSourceMapStrings) Get(key string) (string, bool, error) {
+	return sliceStringsToGetString(s, key)
 }
 
 // SliceStringsSourceFunc - func implement SliceStringSource
@@ -61,21 +61,22 @@ type SliceStringsSourceFunc func(key string) ([]string, bool, error)
 var _ SliceStringsSource = SliceStringsSourceFunc(nil)
 
 // Get value from source
-func (fn SliceStringsSourceFunc) Get(key string) ([]string, bool, error) {
+func (fn SliceStringsSourceFunc) GetStrings(key string) ([]string, bool, error) {
 	return fn(key)
 }
 
-// StringSource - return string source
-func (fn SliceStringsSourceFunc) StringSource() StringSource {
-	return StringSourceFunc(func(key string) (string, bool, error) {
-		ss, ok, err := fn(key)
-		if err != nil || !ok {
-			return "", ok, err
-		}
-		var s string
-		if len(ss) > 0 {
-			s = ss[0]
-		}
-		return s, true, nil
-	})
+// Get value from source
+func (fn SliceStringsSourceFunc) Get(key string) (string, bool, error) {
+	return sliceStringsToGetString(fn, key)
+}
+
+func sliceStringsToGetString(source SliceStringsSource, key string) (string, bool, error) {
+	ss, ok, err := source.GetStrings(key)
+	if err != nil || !ok {
+		return "", ok, err
+	}
+	if len(ss) > 0 {
+		return ss[0], ok, nil
+	}
+	return "", ok, nil
 }

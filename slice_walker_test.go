@@ -22,9 +22,9 @@ func TestSliceStringsSourceFunc_StringSource(t *testing.T) {
 		"key": {expect, "test2"},
 	}
 	source := SliceStringsSourceFunc(func(key string) ([]string, bool, error) {
-		return SliceStringsSourceMapStrings(m).Get(key)
+		return SliceStringsSourceMapStrings(m).GetStrings(key)
 	})
-	stringSource := source.StringSource()
+	stringSource := source
 	s, ok, err := stringSource.Get("key")
 	if err != nil {
 		t.Errorf("Error on get string from slice source: %v", err)
