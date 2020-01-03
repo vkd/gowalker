@@ -21,7 +21,7 @@ func BenchmarkWalk(b *testing.B) {
 		"DB_PORT": "9000",
 	}
 
-	w := gowalker.NewStringWalker("config", gowalker.StringSourceMapString(env))
+	w := gowalker.NewStringWalker("config", gowalker.MapStringSource(env))
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -49,7 +49,7 @@ func BenchmarkWalk_MapSource(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		w := gowalker.NewStringWalker("config", gowalker.StringSourceMapString(env))
+		w := gowalker.NewStringWalker("config", gowalker.MapStringSource(env))
 
 		err := gowalker.Walk(&cfg, w)
 		if err != nil {
@@ -73,7 +73,7 @@ func BenchmarkWalk_Wrap(b *testing.B) {
 		"DB_PORT": "9000",
 	}
 
-	w := gowalker.NewStringWalker("config", gowalker.StringSourceMapString(env))
+	w := gowalker.NewStringWalker("config", gowalker.MapStringSource(env))
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -101,7 +101,7 @@ func BenchmarkWalk_MapSource_Wrap(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		w := gowalker.NewStringWalker("config", gowalker.StringSourceMapString(env))
+		w := gowalker.NewStringWalker("config", gowalker.MapStringSource(env))
 
 		err := gowalker.WalkFullname(&cfg, w, gowalker.ConcatNamer)
 		if err != nil {

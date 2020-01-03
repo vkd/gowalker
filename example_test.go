@@ -22,7 +22,7 @@ func ExampleWalk_upperConfigEnv() {
 		"DB_PORT": "9000",
 	}
 
-	err := gowalker.StructFullname(&cfg, "config", gowalker.StringSourceMapString(env), gowalker.UpperNamer)
+	err := gowalker.StructFullname(&cfg, "config", gowalker.MapStringSource(env), gowalker.UpperNamer)
 
 	fmt.Printf("cfg: %#v, %v", cfg, err)
 	// Output: cfg: struct { Name string; DB struct { Type string; Port int } }{Name:"service", DB:struct { Type string; Port int }{Type:"postgres", Port:9000}}, <nil>
@@ -63,11 +63,7 @@ func ExampleWalk_WalkWithMapSource() {
 		"PORT":    "9000",
 	}
 
-	w := gowalker.NewStringWalker(
-		"config",
-		gowalker.StringSourceMapString(m),
-	)
-	err := gowalker.WalkFullname(&cfg, w, gowalker.UpperNamer)
+	err := gowalker.StructFullname(&cfg, "config", gowalker.MapStringSource(m), gowalker.UpperNamer)
 	fmt.Printf("cfg: %v, %v", cfg, err)
 	// Output: cfg: {service {postgres 9000 dbuser}}, <nil>
 }

@@ -49,11 +49,11 @@ func StringGetValue(tag string, source StringSource, field reflect.StructField) 
 	return str, true, nil
 }
 
-// StringSourceMapString - map[string]string implement StringSource
-type StringSourceMapString map[string]string
+// MapStringSource - map[string]string implement StringSource
+type MapStringSource map[string]string
 
 // Get value from source
-func (s StringSourceMapString) Get(key string) (string, bool, error) {
+func (s MapStringSource) Get(key string) (string, bool, error) {
 	v, ok := s[key]
 	return v, ok, nil
 }
