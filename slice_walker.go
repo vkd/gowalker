@@ -36,7 +36,7 @@ func SliceStringsWalkerStep(tag string, source SliceStringsSource, value reflect
 		if err != nil || !ok {
 			return ok, err
 		}
-		return true, setters.SetValueBySliceOfString(value, field, ss)
+		return true, setters.SetSliceStrings(value, field, ss)
 	}
 	return StringWalkerStep(tag, source, value, field)
 }

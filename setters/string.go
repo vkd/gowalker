@@ -17,10 +17,10 @@ var (
 	ErrNotSettedField = errors.New("cannot be set")
 )
 
-// SetValueByString - set value by string
+// SetString - set value by string
 //
 // Not implemented kinds: Complex, Chan
-func SetValueByString(value reflect.Value, field reflect.StructField, str string) error { // nolint: gocyclo
+func SetString(value reflect.Value, field reflect.StructField, str string) error { // nolint: gocyclo
 	if !value.CanSet() {
 		return ErrNotSettedField
 	}
@@ -83,7 +83,7 @@ func SetValueByString(value reflect.Value, field reflect.StructField, str string
 		if value.IsNil() {
 			value.Set(reflect.New(value.Type().Elem()))
 		}
-		return SetValueByString(value.Elem(), field, str)
+		return SetString(value.Elem(), field, str)
 
 	case reflect.Slice:
 		return sliceStringSetter(value, field, []string{str})
@@ -206,7 +206,7 @@ func sliceStringSetter(value reflect.Value, field reflect.StructField, strs []st
 
 func arrayStringSetter(value reflect.Value, field reflect.StructField, strs []string) error {
 	for i, s := range strs {
-		err := SetValueByString(value.Index(i), field, s)
+		err := SetString(value.Index(i), field, s)
 		if err != nil {
 			return err
 		}

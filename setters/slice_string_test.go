@@ -22,7 +22,7 @@ func TestSetValueBySliceOfString(t *testing.T) {
 
 	for _, tt := range tests {
 		v, assertFn := tt.fn()
-		if err := SetValueBySliceOfString(v, tt.field, tt.strs); (err != nil) != tt.wantErr {
+		if err := SetSliceStrings(v, tt.field, tt.strs); (err != nil) != tt.wantErr {
 			t.Errorf("%q. SetValueBySliceOfString() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 		}
 		if assertFn != nil {

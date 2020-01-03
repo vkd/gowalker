@@ -126,7 +126,7 @@ func TestSetValueByString(t *testing.T) {
 	// TESTS
 	for _, tt := range tests {
 		v, assertFn := tt.fn()
-		if err := SetValueByString(v, tt.field, tt.str); (err != nil) != tt.wantErr {
+		if err := SetString(v, tt.field, tt.str); (err != nil) != tt.wantErr {
 			t.Errorf("%q. SetValueByString() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 		}
 		if assertFn != nil {

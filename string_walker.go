@@ -30,7 +30,7 @@ func StringWalkerStep(tag string, source StringSource, value reflect.Value, fiel
 	if err != nil || !ok {
 		return ok, err
 	}
-	return true, setters.SetValueByString(value, field, str)
+	return true, setters.SetString(value, field, str)
 }
 
 // StringGetValue - get string value from field
