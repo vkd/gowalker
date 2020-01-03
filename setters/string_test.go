@@ -24,7 +24,7 @@ func TestSetValueByString(t *testing.T) {
 	var tests = []testStruct{
 		{"Invalid Kind", func() (reflect.Value, assertFunc) { return reflect.Value{}, nil }, emptyField, "", true},
 		{"time.Time layout", assert(time.Date(2020, 11, 6, 0, 0, 0, 0, time.UTC)), reflect.StructField{Tag: `time_layout:"02-2006-01"`}, "06-2020-11", false},
-		{"not setted ptr", func() (reflect.Value, assertFunc) {
+		{"not set ptr", func() (reflect.Value, assertFunc) {
 			var i *int
 			return reflect.ValueOf(i), nil
 		}, emptyField, "", true},

@@ -50,39 +50,39 @@ func walk(value reflect.Value, field structField, walker Walker) (bool, error) {
 	return false, nil
 }
 
-func walkPrt(value reflect.Value, field structField, walker Walker) (setted bool, err error) {
+func walkPrt(value reflect.Value, field structField, walker Walker) (set bool, err error) {
 	isCreateNew := value.IsNil()
 
 	vPtr := value
 	if isCreateNew {
 		vPtr = reflect.New(value.Type().Elem())
 	}
-	setted, err = walk(vPtr.Elem(), field, walker)
+	set, err = walk(vPtr.Elem(), field, walker)
 	if err != nil {
 		return false, err
 	}
-	if isCreateNew && setted {
+	if isCreateNew && set {
 		value.Set(vPtr)
 	}
-	return setted, nil
+	return set, nil
 }
 
-func walkStruct(value reflect.Value, field structField, walker Walker) (setted bool, err error) {
+func walkStruct(value reflect.Value, field structField, walker Walker) (set bool, err error) {
 	tp := value.Type()
 
-	var isStructSetted bool
+	var isStructSet bool
 	for i := 0; i < value.NumField(); i++ {
 		if !value.Field(i).CanSet() {
 			continue
 		}
 		tField := tp.Field(i)
-		setted, err := walk(value.Field(i), field.Child(tField), walker)
+		set, err := walk(value.Field(i), field.Child(tField), walker)
 		if err != nil {
 			return false, err
 		}
-		isStructSetted = isStructSetted || setted
+		isStructSet = isStructSet || set
 	}
-	return isStructSetted, nil
+	return isStructSet, nil
 }
 
 var emptyField = reflect.StructField{}

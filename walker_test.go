@@ -25,7 +25,7 @@ func TestWalkBaseStruct(t *testing.T) {
 	testWalkStruct(t, &s, WalkerFunc(fn), expectVisited, nil)
 }
 
-func TestWalkStructSetted(t *testing.T) {
+func TestWalkStructSet(t *testing.T) {
 	var s struct {
 		ID *struct {
 			Number int

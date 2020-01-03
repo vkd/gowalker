@@ -5,7 +5,7 @@ import "reflect"
 // SetSliceStrings - set value by slice of strings
 //
 // Support multi values only: Slice, Array
-// other kindes setted by string (first value from slice)
+// other kindes set by string (first value from slice)
 func SetSliceStrings(value reflect.Value, field reflect.StructField, strs []string) error {
 	switch value.Kind() {
 	case reflect.Slice:

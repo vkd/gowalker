@@ -13,8 +13,8 @@ var (
 	ErrNotSupportKind = errors.New("not support kind")
 	// ErrNotImplemented - not implemented yet functionality
 	ErrNotImplemented = errors.New("not implemented")
-	// ErrNotSettedField - field cannot be set
-	ErrNotSettedField = errors.New("cannot be set")
+	// ErrNotSetField - field cannot be set
+	ErrNotSetField = errors.New("cannot be set")
 )
 
 // SetString - set value by string
@@ -22,7 +22,7 @@ var (
 // Not implemented kinds: Complex, Chan
 func SetString(value reflect.Value, field reflect.StructField, str string) error { // nolint: gocyclo
 	if !value.CanSet() {
-		return ErrNotSettedField
+		return ErrNotSetField
 	}
 
 	switch value.Kind() {
