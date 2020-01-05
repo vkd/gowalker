@@ -7,7 +7,7 @@ import (
 	"github.com/vkd/gowalker"
 )
 
-func BenchmarkWalk(b *testing.B) {
+func BenchmarkWalk_NewWalker(b *testing.B) {
 	var cfg struct {
 		Name string
 		DB   struct {
@@ -57,7 +57,7 @@ func BenchmarkWalk_MapSource(b *testing.B) {
 	}
 }
 
-func BenchmarkWalk_Wrap(b *testing.B) {
+func BenchmarkWalk_NewWalker_ConcatNamer(b *testing.B) {
 	var cfg struct {
 		Name string
 		DB   struct {
@@ -77,30 +77,6 @@ func BenchmarkWalk_Wrap(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		err := gowalker.WalkFullname(&cfg, w, gowalker.ConcatNamer)
-		if err != nil {
-			b.Fatalf("Error on walk: %v", err)
-		}
-	}
-}
-
-func BenchmarkWalk_MapSource_Wrap(b *testing.B) {
-	var cfg struct {
-		Name string
-		DB   struct {
-			Type string
-			Port int
-		}
-	}
-
-	env := map[string]string{
-		"NAME":    "service",
-		"DB_TYPE": "postgres",
-		"DB_PORT": "9000",
-	}
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		err := gowalker.WalkFullname(&cfg, mapSourceConfigWalker(env), gowalker.ConcatNamer)
 		if err != nil {
 			b.Fatalf("Error on walk: %v", err)
 		}
