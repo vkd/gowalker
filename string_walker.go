@@ -1,7 +1,6 @@
 package gowalker
 
 import (
-	"os"
 	"reflect"
 
 	"github.com/vkd/gowalker/setter"
@@ -64,15 +63,4 @@ type StringSourceFunc func(key string) (value string, ok bool, err error)
 // Get value from source
 func (s StringSourceFunc) Get(key string) (value string, ok bool, err error) {
 	return s(key)
-}
-
-// EnvStringSource - source from os env
-var EnvStringSource = StringSourceFunc(func(key string) (string, bool, error) {
-	v, ok := os.LookupEnv(key)
-	return v, ok, nil
-})
-
-// NewEnvWalker - walker from env
-func NewEnvWalker(tag string) Walker {
-	return NewStringWalker(tag, EnvStringSource)
 }
