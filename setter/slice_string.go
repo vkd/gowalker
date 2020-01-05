@@ -1,4 +1,4 @@
-package setters
+package setter
 
 import "reflect"
 

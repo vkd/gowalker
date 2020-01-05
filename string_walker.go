@@ -4,7 +4,7 @@ import (
 	"os"
 	"reflect"
 
-	"github.com/vkd/gowalker/setters"
+	"github.com/vkd/gowalker/setter"
 )
 
 // NewStringWalker - simple string walker
@@ -30,7 +30,7 @@ func StringWalkerStep(tag string, source StringSource, value reflect.Value, fiel
 	if err != nil || !ok {
 		return ok, err
 	}
-	return true, setters.SetString(value, field, str)
+	return true, setter.SetString(value, field, str)
 }
 
 // StringGetValue - get string value from field
