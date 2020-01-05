@@ -1,6 +1,7 @@
 package gowalker_test
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/vkd/gowalker"
@@ -49,9 +50,7 @@ func BenchmarkWalk_MapSource(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		w := gowalker.NewStringWalker("config", gowalker.MapStringSource(env))
-
-		err := gowalker.Walk(&cfg, w)
+		err := gowalker.Walk(&cfg, mapSourceConfigWalker(env))
 		if err != nil {
 			b.Fatalf("Error on walk: %v", err)
 		}
@@ -101,11 +100,17 @@ func BenchmarkWalk_MapSource_Wrap(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		w := gowalker.NewStringWalker("config", gowalker.MapStringSource(env))
-
-		err := gowalker.WalkFullname(&cfg, w, gowalker.ConcatNamer)
+		err := gowalker.WalkFullname(&cfg, mapSourceConfigWalker(env), gowalker.ConcatNamer)
 		if err != nil {
 			b.Fatalf("Error on walk: %v", err)
 		}
 	}
+}
+
+type mapSourceConfigWalker gowalker.MapStringSource
+
+var _ gowalker.Walker = (mapSourceConfigWalker)(nil)
+
+func (m mapSourceConfigWalker) Step(value reflect.Value, field reflect.StructField) (bool, error) {
+	return gowalker.StringWalkerStep("config", gowalker.MapStringSource(m), value, field)
 }

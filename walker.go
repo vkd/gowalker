@@ -5,18 +5,6 @@ import (
 	"strings"
 )
 
-// Struct - walk by struct fields.
-func Struct(value interface{}, tag string, source StringSource) error {
-	return StructFullname(value, tag, source, nil)
-}
-
-// StructFullname - walk by struct fields with custom field name generator.
-func StructFullname(value interface{}, tag string, source StringSource, namer Namer) error {
-	w := NewStringWalker(tag, source)
-	_, err := walkIface(value, w, namer)
-	return err
-}
-
 // Walk - walk struct by all public fields
 func Walk(value interface{}, walker Walker) error {
 	return WalkFullname(value, walker, nil)
