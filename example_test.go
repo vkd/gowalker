@@ -7,7 +7,7 @@ import (
 	"github.com/vkd/gowalker"
 )
 
-func ExampleWalk_upperConfigEnv() {
+func ExampleWalk_ConfigFromMap() {
 	var cfg struct {
 		Name string
 		DB   struct {
@@ -29,7 +29,7 @@ func ExampleWalk_upperConfigEnv() {
 	// Output: cfg: struct { Name string; DB struct { Type string; Port int } }{Name:"service", DB:struct { Type string; Port int }{Type:"postgres", Port:9000}}, <nil>
 }
 
-func ExampleWalk_ginBinding() {
+func ExampleWalk_SliceBindingWithDefault() {
 	var q struct {
 		Name    string   `uri:"name"`
 		Age     int      `uri:"age,default=25"`
@@ -43,7 +43,7 @@ func ExampleWalk_ginBinding() {
 		"friends": {"igor", "alisa"},
 	}
 
-	w := gowalker.NewStringWalker("uri", gowalker.SliceStringsSourceMapStrings(uri))
+	w := gowalker.NewStringWalker("uri", gowalker.MapStringsSourcer(uri))
 	err := gowalker.Walk(&q, w)
 	fmt.Printf("uri: %#v, %v", q, err)
 	// Output: uri: struct { Name string "uri:\"name\""; Age int "uri:\"age,default=25\""; Friends []string "uri:\"friends\""; Coins []int "uri:\"coins,default=40\""; Keys []int }{Name:"mike", Age:25, Friends:[]string{"igor", "alisa"}, Coins:[]int{40}, Keys:[]int(nil)}, <nil>
@@ -94,10 +94,7 @@ func ExampleWalk_ServiceEnvLoader() {
 	var c config
 	w := gowalker.NewStringWalker(
 		"env",
-		gowalker.StringSourceFunc(func(key string) (string, bool, error) {
-			v, ok := osLookupEnv(key)
-			return v, ok, nil
-		}),
+		gowalker.LookupFuncSource(osLookupEnv),
 	)
 	err := gowalker.WalkFullname(&c, w, gowalker.UpperNamer)
 	fmt.Printf("env: %v, %v", c, err)

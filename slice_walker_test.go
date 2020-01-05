@@ -7,7 +7,7 @@ import (
 
 func TestSliceStringGetValue(t *testing.T) {
 	errTest := errors.New("test error")
-	errSource := SliceStringsSourceFunc(func(key string) ([]string, bool, error) {
+	errSource := SliceSourcerFunc(func(key string) ([]string, bool, error) {
 		return nil, false, errTest
 	})
 	_, _, err := SliceStringGetValue("tag", errSource, emptyField)
@@ -16,13 +16,13 @@ func TestSliceStringGetValue(t *testing.T) {
 	}
 }
 
-func TestSliceStringsSourceFunc_StringSource(t *testing.T) {
+func TestSliceSourcerFunc_StringSource(t *testing.T) {
 	expect := "test1"
 	m := map[string][]string{
 		"key": {expect, "test2"},
 	}
-	source := SliceStringsSourceFunc(func(key string) ([]string, bool, error) {
-		return SliceStringsSourceMapStrings(m).GetStrings(key)
+	source := SliceSourcerFunc(func(key string) ([]string, bool, error) {
+		return MapStringsSourcer(m).GetStrings(key)
 	})
 	stringSource := source
 	s, ok, err := stringSource.Get("key")
