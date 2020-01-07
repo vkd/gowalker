@@ -1,7 +1,5 @@
 package gowalker
 
-import "os"
-
 // Sourcer - source of values by key.
 type Sourcer interface {
 	Get(key string) (value string, ok bool, err error)
@@ -32,7 +30,6 @@ func (f LookupFuncSource) Get(key string) (string, bool, error) {
 type EnvFuncSource = LookupFuncSource
 
 var _ Sourcer = EnvFuncSource(nil)
-var _ Sourcer = EnvFuncSource(os.LookupEnv)
 
 // SliceSourcer - source of values by slice of strings.
 type SliceSourcer interface {
