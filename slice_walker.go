@@ -34,29 +34,3 @@ func SliceStringsWalkerStep(tag string, source SliceSourcer, value reflect.Value
 	}
 	return StringWalkerStep(tag, source, value, field)
 }
-
-// // SliceSourcerFunc - func implement SliceStringSource
-// type SliceSourcerFunc func(key string) ([]string, bool, error)
-
-// var _ SliceSourcer = SliceSourcerFunc(nil)
-
-// // Get value from source
-// func (fn SliceSourcerFunc) GetStrings(key string) ([]string, bool, error) {
-// 	return fn(key)
-// }
-
-// // Get value from source
-// func (fn SliceSourcerFunc) Get(key string) (string, bool, error) {
-// 	return sliceStringsToGetString(fn, key)
-// }
-
-func sliceStringsToGetString(source SliceSourcer, key string) (string, bool, error) {
-	ss, ok, err := source.GetStrings(key)
-	if err != nil || !ok {
-		return "", ok, err
-	}
-	if len(ss) > 0 {
-		return ss[0], ok, nil
-	}
-	return "", ok, nil
-}

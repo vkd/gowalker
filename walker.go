@@ -16,12 +16,6 @@ func WalkFullname(value interface{}, walker Walker, namer Namer) error {
 	return err
 }
 
-// Wrapper - interface to allow build tree of struct fields
-type Wrapper interface {
-	Walker
-	Wrap(field reflect.StructField) Walker
-}
-
 // WalkerFunc - func implemented Walk interface
 type WalkerFunc func(value reflect.Value, field reflect.StructField) (bool, error)
 

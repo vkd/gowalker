@@ -52,3 +52,14 @@ func (s MapStringsSourcer) GetStrings(key string) ([]string, bool, error) {
 func (s MapStringsSourcer) Get(key string) (string, bool, error) {
 	return sliceStringsToGetString(s, key)
 }
+
+func sliceStringsToGetString(source SliceSourcer, key string) (string, bool, error) {
+	ss, ok, err := source.GetStrings(key)
+	if err != nil || !ok {
+		return "", ok, err
+	}
+	if len(ss) > 0 {
+		return ss[0], ok, nil
+	}
+	return "", ok, nil
+}
