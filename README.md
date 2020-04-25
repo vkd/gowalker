@@ -53,7 +53,7 @@ func main() {
 	env := map[string]string{
 		"Addr":    "localhost:9000",
 		"Timeout": "5m",
-		
+
 		"Name":    "postgres",
 		"db_port": "9001",
 	}
@@ -62,7 +62,34 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-  
+
   ...
+}
+```
+
+## Example of the config parsing
+
+```go
+type Config struct {
+	Env int
+	DB  struct {
+		Port  int `default:"1000" env:"DB_PORT"`
+	}
+}
+
+func ParseConfig() (Config, error) {
+	var c Config
+	err := config.Fill(&c,
+		gowalker.Tag("default"),
+		config.Name(
+			gowalker.Fullname("_", strings.ToUpper),
+			gowalker.NewStringWalker("env", gowalker.EnvFuncSource(os.LookupEnv)),
+		),
+		config.FlagWalker(
+			gowalker.Tag("flag"),
+			gowalker.Fullname("-", strings.ToLower),
+		),
+	)
+	return c, err
 }
 ```
