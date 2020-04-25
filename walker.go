@@ -53,8 +53,14 @@ func (a appendNamer) FieldName(parent, name string) string {
 // UpperNamer - concat a uppercase parent's name with a uppercase child's one with underscore.
 var UpperNamer Namer = appendNamer{"_", strings.ToUpper}
 
+// EnvNamer - STRUCT_FIELD naming.
+var EnvNamer = UpperNamer
+
 // ConcatNamer - concat a parent's name with a child's one with underscore.
 var ConcatNamer Namer = appendNamer{separator: "_"}
 
 // DashToLoverNamer - concat a lowercase parent's name with a lowercase child's one with dash.
 var DashToLoverNamer Namer = appendNamer{"-", strings.ToLower}
+
+// FlagNamer - struct-field naming.
+var FlagNamer = DashToLoverNamer
