@@ -7,48 +7,49 @@ import (
 
 // Walker - interface to walk through struct fields
 type Walker interface {
-	Step(value reflect.Value, field reflect.StructField) (bool, error)
+	Step(value reflect.Value, field reflect.StructField, name Name) (bool, error)
+}
+
+// Name of the struct field.
+type Name interface {
+	Get(n Namer) string
 }
 
 // WalkerFunc - func implemented Walk interface
-type WalkerFunc func(value reflect.Value, field reflect.StructField) (bool, error)
+type WalkerFunc func(value reflect.Value, field reflect.StructField, name Name) (bool, error)
 
 // Step - one step of walker
-func (f WalkerFunc) Step(value reflect.Value, field reflect.StructField) (bool, error) {
-	return f(value, field)
+func (f WalkerFunc) Step(value reflect.Value, field reflect.StructField, name Name) (bool, error) {
+	return f(value, field, name)
 }
 
 // Walk - walk struct by all public fields
 func Walk(value interface{}, walker Walker) error {
-	return WalkFullname(value, walker, nil)
-}
-
-// WalkFullname - walk struct by all public fields with custom field name generator.
-func WalkFullname(value interface{}, walker Walker, namer Namer) error {
-	_, err := walkIface(value, walker, namer)
+	var name = make(fieldsStack, 0, 4)
+	_, err := walkIface(value, &name, walker)
 	return err
 }
 
-func walkIface(value interface{}, walker Walker, namer Namer) (bool, error) {
+func walkIface(value interface{}, name nameBuilder, walker Walker) (bool, error) {
 	v := reflect.ValueOf(value)
 	if v.Kind() != reflect.Ptr {
 		return false, errors.New("unsupported type for value: allowed only ptr")
 	}
-	return walkPrt(v, structField{namer: namer}, walker)
+	return walkPrt(v, emptyField, name, walker)
 }
 
-func walk(value reflect.Value, field structField, walker Walker) (bool, error) {
+func walk(value reflect.Value, field reflect.StructField, name nameBuilder, walker Walker) (bool, error) {
 	if !value.CanSet() {
 		return false, nil
 	}
 
 	kind := value.Kind()
 	if kind == reflect.Ptr {
-		return walkPrt(value, field, walker)
+		return walkPrt(value, field, name, walker)
 	}
 
-	if !isEmptyField(field.field) {
-		ok, err := walker.Step(value, field.field)
+	if !isEmptyField(field) {
+		ok, err := walker.Step(value, field, name)
 		if err != nil {
 			return false, err
 		}
@@ -58,20 +59,20 @@ func walk(value reflect.Value, field structField, walker Walker) (bool, error) {
 	}
 
 	if kind == reflect.Struct {
-		return walkStruct(value, field, walker)
+		return walkStruct(value, field, name, walker)
 	}
 
 	return false, nil
 }
 
-func walkPrt(value reflect.Value, field structField, walker Walker) (set bool, err error) {
+func walkPrt(value reflect.Value, field reflect.StructField, name nameBuilder, walker Walker) (set bool, err error) {
 	isCreateNew := value.IsNil()
 
 	vPtr := value
 	if isCreateNew {
 		vPtr = reflect.New(value.Type().Elem())
 	}
-	set, err = walk(vPtr.Elem(), field, walker)
+	set, err = walk(vPtr.Elem(), field, name, walker)
 	if err != nil {
 		return false, err
 	}
@@ -81,7 +82,7 @@ func walkPrt(value reflect.Value, field structField, walker Walker) (set bool, e
 	return set, nil
 }
 
-func walkStruct(value reflect.Value, field structField, walker Walker) (set bool, err error) {
+func walkStruct(value reflect.Value, _ reflect.StructField, name nameBuilder, walker Walker) (set bool, err error) {
 	tp := value.Type()
 
 	var isStructSet bool
@@ -90,7 +91,9 @@ func walkStruct(value reflect.Value, field structField, walker Walker) (set bool
 			continue
 		}
 		tField := tp.Field(i)
-		set, err := walk(value.Field(i), field.Child(tField), walker)
+		name.Next(tField)
+		set, err := walk(value.Field(i), tField, name, walker)
+		name.Pop()
 		if err != nil {
 			return false, err
 		}
@@ -105,17 +108,30 @@ func isEmptyField(field reflect.StructField) bool {
 	return field.Name == emptyField.Name
 }
 
-type structField struct {
-	field reflect.StructField
+type nameBuilder interface {
+	Name
 
-	namer Namer
+	Next(reflect.StructField)
+	Pop()
 }
 
-func (f structField) Child(c reflect.StructField) structField {
-	if f.namer != nil {
-		c.Name = f.namer.FieldName(f.field.Name, c.Name)
-	}
+type fieldsStack []string
 
-	f.field = c
-	return f
+func (fs *fieldsStack) Get(n Namer) string {
+	if n == nil {
+		return (*fs)[len(*fs)-1]
+	}
+	var out string
+	for _, f := range *fs {
+		out = n.FieldName(out, f)
+	}
+	return out
+}
+
+func (fs *fieldsStack) Next(f reflect.StructField) {
+	*fs = append(*fs, f.Name)
+}
+
+func (fs *fieldsStack) Pop() {
+	*fs = (*fs)[:len(*fs)-1]
 }

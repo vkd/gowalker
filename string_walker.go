@@ -7,20 +7,20 @@ import (
 )
 
 // NewStringWalker - simple string walker
-func NewStringWalker(tag string, source Sourcer) Walker {
+func NewStringWalker(tag string, source Sourcer, namer Namer) Walker {
 	if ss, ok := source.(SliceSourcer); ok {
-		return WalkerFunc(func(value reflect.Value, field reflect.StructField) (bool, error) {
-			return SliceStringsWalkerStep(tag, ss, value, field)
+		return WalkerFunc(func(value reflect.Value, field reflect.StructField, name Name) (bool, error) {
+			return SliceStringsWalkerStep(tag, ss, value, field, name, namer)
 		})
 	}
-	return WalkerFunc(func(value reflect.Value, field reflect.StructField) (bool, error) {
-		return StringWalkerStep(tag, source, value, field)
+	return WalkerFunc(func(value reflect.Value, field reflect.StructField, name Name) (bool, error) {
+		return StringWalkerStep(tag, source, value, field, name, namer)
 	})
 }
 
 // StringWalkerStep - step of walker by string value
-func StringWalkerStep(tag string, source Sourcer, value reflect.Value, field reflect.StructField) (bool, error) {
-	str, ok, err := StringGetValue(tag, source, field)
+func StringWalkerStep(tag string, source Sourcer, value reflect.Value, field reflect.StructField, name Name, namer Namer) (bool, error) {
+	str, ok, err := StringGetValue(tag, source, field, name, namer)
 	if err != nil || !ok {
 		return ok, err
 	}
@@ -28,17 +28,10 @@ func StringWalkerStep(tag string, source Sourcer, value reflect.Value, field ref
 }
 
 // StringGetValue - get string value from field
-func StringGetValue(tag string, source Sourcer, field reflect.StructField) (string, bool, error) {
+func StringGetValue(tag string, source Sourcer, field reflect.StructField, name Name, namer Namer) (string, bool, error) {
 	t, ok := field.Tag.Lookup(tag)
 	if !ok {
-		t = field.Name
+		t = name.Get(namer)
 	}
-	str, ok, err := source.Get(t)
-	if err != nil {
-		return "", false, err
-	}
-	if !ok {
-		return "", false, nil
-	}
-	return str, true, nil
+	return source.Get(t)
 }

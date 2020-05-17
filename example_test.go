@@ -22,8 +22,8 @@ func ExampleWalk_ConfigFromMap() {
 		"DB_PORT": "9000",
 	}
 
-	w := gowalker.NewStringWalker("config", gowalker.MapStringSource(env))
-	err := gowalker.WalkFullname(&cfg, w, gowalker.UpperNamer)
+	w := gowalker.NewStringWalker("config", gowalker.MapStringSource(env), gowalker.UpperNamer)
+	err := gowalker.Walk(&cfg, w)
 
 	fmt.Printf("cfg: %#v, %v", cfg, err)
 	// Output: cfg: struct { Name string; DB struct { Type string; Port int } }{Name:"service", DB:struct { Type string; Port int }{Type:"postgres", Port:9000}}, <nil>
@@ -43,7 +43,7 @@ func ExampleWalk_SliceBindingWithDefault() {
 		"friends": {"igor", "alisa"},
 	}
 
-	w := gowalker.NewStringWalker("uri", gowalker.MapStringsSourcer(uri))
+	w := gowalker.NewStringWalker("uri", gowalker.MapStringsSourcer(uri), nil)
 	err := gowalker.Walk(&q, w)
 	fmt.Printf("uri: %#v, %v", q, err)
 	// Output: uri: struct { Name string "uri:\"name\""; Age int "uri:\"age\""; Friends []string "uri:\"friends\""; Coins []int "uri:\"coins\""; Keys []int }{Name:"mike", Age:0, Friends:[]string{"igor", "alisa"}, Coins:[]int(nil), Keys:[]int(nil)}, <nil>
@@ -65,8 +65,8 @@ func ExampleWalk_WalkWithMapSource() {
 		"PORT":    "9000",
 	}
 
-	w := gowalker.NewStringWalker("config", gowalker.MapStringSource(m))
-	err := gowalker.WalkFullname(&cfg, w, gowalker.UpperNamer)
+	w := gowalker.NewStringWalker("config", gowalker.MapStringSource(m), gowalker.UpperNamer)
+	err := gowalker.Walk(&cfg, w)
 	fmt.Printf("cfg: %v, %v", cfg, err)
 	// Output: cfg: {service {postgres 9000 }}, <nil>
 }
@@ -95,16 +95,18 @@ func ExampleWalk_ServiceEnvLoader() {
 	w := gowalker.NewStringWalker(
 		"env",
 		gowalker.LookupFuncSource(osLookupEnv),
+		gowalker.UpperNamer,
 	)
-	err := gowalker.WalkFullname(&c, w, gowalker.UpperNamer)
+	err := gowalker.Walk(&c, w)
 	fmt.Printf("env: %v, %v", c, err)
 	// Output: env: {Env 0 {postgres 5432}}, <nil>
 }
 
 type visitedFields []string
 
-func (f *visitedFields) Step(value reflect.Value, field reflect.StructField) (set bool, err error) {
-	*f = append(*f, field.Name)
+func (f *visitedFields) Step(value reflect.Value, field reflect.StructField, name gowalker.Name) (set bool, err error) {
+	key := name.Get(gowalker.DashToLoverNamer)
+	*f = append(*f, key)
 	return false, nil
 }
 
@@ -119,7 +121,7 @@ func ExampleWalk_CollectAllPublicFields() {
 	}
 
 	var fs visitedFields
-	err := gowalker.WalkFullname(&config, &fs, gowalker.DashToLoverNamer)
+	err := gowalker.Walk(&config, &fs)
 	fmt.Printf("fields: %v, %v", fs, err)
 	// Output: fields: [name port db db-url db-port], <nil>
 }

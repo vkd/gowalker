@@ -23,19 +23,6 @@ func Fill(c interface{}, ws ...Walker) error {
 	return nil
 }
 
-type nameWalker struct {
-	walker gowalker.Walker
-	namer  gowalker.Namer
-}
-
-func (w nameWalker) Walk(v interface{}) error {
-	return gowalker.WalkFullname(v, w.walker, w.namer)
-}
-
-func Name(n gowalker.Namer, w gowalker.Walker) Walker {
-	return nameWalker{walker: w, namer: n}
-}
-
 func FlagWalker(t gowalker.Tag, n gowalker.Namer) Walker {
 	return flagWalker{tag: t, namer: n}
 }
@@ -49,28 +36,28 @@ func (w flagWalker) Walk(c interface{}) error {
 	var flags = make(map[string]*string)
 	var isNotSetString = "~~EMPTY~~"
 
-	var flagWalker gowalker.WalkerFunc = func(value reflect.Value, field reflect.StructField) (bool, error) {
-		name, ok := field.Tag.Lookup(string(w.tag))
+	var flagWalker gowalker.WalkerFunc = func(value reflect.Value, field reflect.StructField, name gowalker.Name) (bool, error) {
+		key, ok := field.Tag.Lookup(string(w.tag))
 		if !ok {
-			name = field.Name
+			key = name.Get(w.namer)
 		}
-		s := flag.String(name, isNotSetString, field.Name)
+		s := flag.String(key, isNotSetString, field.Name)
 		flags[field.Name] = s
 		return false, nil
 	}
-	err := gowalker.WalkFullname(c, flagWalker, w.namer)
+	err := gowalker.Walk(c, flagWalker)
 	if err != nil {
 		return fmt.Errorf("error on flag walker: %w", err)
 	}
 
 	flag.Parse()
 
-	var flagSetter gowalker.WalkerFunc = func(value reflect.Value, field reflect.StructField) (bool, error) {
-		name, ok := field.Tag.Lookup(string(w.tag))
+	var flagSetter gowalker.WalkerFunc = func(value reflect.Value, field reflect.StructField, name gowalker.Name) (bool, error) {
+		key, ok := field.Tag.Lookup(string(w.tag))
 		if !ok {
-			name = field.Name
+			key = name.Get(w.namer)
 		}
-		s, ok := flags[name]
+		s, ok := flags[key]
 		if !ok {
 			return false, nil
 		}
@@ -82,7 +69,7 @@ func (w flagWalker) Walk(c interface{}) error {
 		}
 		return true, setter.SetString(value, field, *s)
 	}
-	err = gowalker.WalkFullname(c, flagSetter, w.namer)
+	err = gowalker.Walk(c, flagSetter)
 	if err != nil {
 		return fmt.Errorf("error on flag setter: %w", err)
 	}

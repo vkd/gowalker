@@ -17,8 +17,3 @@ func (t Tag) Step(value reflect.Value, field reflect.StructField) (bool, error) 
 	}
 	return true, setter.SetString(value, field, v)
 }
-
-// Walk - implementation of the config.Walker interface.
-func (t Tag) Walk(v interface{}) error {
-	return Walk(v, t)
-}

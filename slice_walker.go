@@ -7,10 +7,10 @@ import (
 )
 
 // SliceStringGetValue - get value from field for slice of strings
-func SliceStringGetValue(tag string, source SliceSourcer, field reflect.StructField) ([]string, bool, error) {
+func SliceStringGetValue(tag string, source SliceSourcer, field reflect.StructField, name Name, namer Namer) ([]string, bool, error) {
 	t, ok := field.Tag.Lookup(tag)
 	if !ok {
-		t = field.Name
+		t = name.Get(namer)
 	}
 	ss, ok, err := source.GetStrings(t)
 	if err != nil {
@@ -23,14 +23,14 @@ func SliceStringGetValue(tag string, source SliceSourcer, field reflect.StructFi
 }
 
 // SliceStringsWalkerStep - step of walker by slice of strings
-func SliceStringsWalkerStep(tag string, source SliceSourcer, value reflect.Value, field reflect.StructField) (bool, error) {
+func SliceStringsWalkerStep(tag string, source SliceSourcer, value reflect.Value, field reflect.StructField, name Name, namer Namer) (bool, error) {
 	switch value.Kind() {
 	case reflect.Slice, reflect.Array:
-		ss, ok, err := SliceStringGetValue(tag, source, field)
+		ss, ok, err := SliceStringGetValue(tag, source, field, name, namer)
 		if err != nil || !ok {
 			return ok, err
 		}
 		return true, setter.SetSliceStrings(value, field, ss)
 	}
-	return StringWalkerStep(tag, source, value, field)
+	return StringWalkerStep(tag, source, value, field, name, namer)
 }

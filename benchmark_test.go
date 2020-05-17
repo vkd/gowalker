@@ -22,7 +22,7 @@ func BenchmarkWalk_NewWalker(b *testing.B) {
 		"DB_PORT": "9000",
 	}
 
-	w := gowalker.NewStringWalker("config", gowalker.MapStringSource(env))
+	w := gowalker.NewStringWalker("config", gowalker.MapStringSource(env), gowalker.UpperNamer)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -72,11 +72,11 @@ func BenchmarkWalk_NewWalker_ConcatNamer(b *testing.B) {
 		"DB_PORT": "9000",
 	}
 
-	w := gowalker.NewStringWalker("config", gowalker.MapStringSource(env))
+	w := gowalker.NewStringWalker("config", gowalker.MapStringSource(env), gowalker.ConcatNamer)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		err := gowalker.WalkFullname(&cfg, w, gowalker.ConcatNamer)
+		err := gowalker.Walk(&cfg, w)
 		if err != nil {
 			b.Fatalf("Error on walk: %v", err)
 		}
@@ -87,6 +87,6 @@ type mapSourceConfigWalker gowalker.MapStringSource
 
 var _ gowalker.Walker = (mapSourceConfigWalker)(nil)
 
-func (m mapSourceConfigWalker) Step(value reflect.Value, field reflect.StructField) (bool, error) {
-	return gowalker.StringWalkerStep("config", gowalker.MapStringSource(m), value, field)
+func (m mapSourceConfigWalker) Step(value reflect.Value, field reflect.StructField, name gowalker.Name) (bool, error) {
+	return gowalker.StringWalkerStep("config", gowalker.MapStringSource(m), value, field, name, gowalker.UpperNamer)
 }

@@ -14,7 +14,7 @@ func TestWalkBaseStruct(t *testing.T) {
 		}
 		sex string // nolint: unused
 	}
-	fn := func(value reflect.Value, field reflect.StructField) (bool, error) {
+	fn := func(value reflect.Value, field reflect.StructField, name Name) (bool, error) {
 		return false, nil
 	}
 	expectVisited := map[string]int{
@@ -31,7 +31,7 @@ func TestWalkStructSet(t *testing.T) {
 			Number int
 		}
 	}
-	fn := func(value reflect.Value, field reflect.StructField) (bool, error) {
+	fn := func(value reflect.Value, field reflect.StructField, name Name) (bool, error) {
 		if field.Name == "ID" {
 			return true, nil
 		}
@@ -48,7 +48,7 @@ func TestWalkFuncError(t *testing.T) {
 		Name int
 	}
 	expectedErr := errors.New("expected error")
-	fn := func(value reflect.Value, field reflect.StructField) (bool, error) {
+	fn := func(value reflect.Value, field reflect.StructField, name Name) (bool, error) {
 		return false, expectedErr
 	}
 	expectVisited := map[string]int{
@@ -60,9 +60,9 @@ func TestWalkFuncError(t *testing.T) {
 func testWalkStruct(t *testing.T, value interface{}, w Walker, expectVisited map[string]int, expectedErr error) {
 	visitedNames := make(map[string]int)
 
-	err := Walk(value, WalkerFunc(func(value reflect.Value, field reflect.StructField) (bool, error) {
+	err := Walk(value, WalkerFunc(func(value reflect.Value, field reflect.StructField, name Name) (bool, error) {
 		visitedNames[field.Name]++
-		return w.Step(value, field)
+		return w.Step(value, field, name)
 	}))
 	if err != expectedErr {
 		t.Errorf("Not expected error: %v", err)
@@ -87,8 +87,9 @@ func TestWalkWrap(t *testing.T) {
 		}
 	}
 	visitedNames := make(map[string]int)
-	fn := func(value reflect.Value, field reflect.StructField) (bool, error) {
-		visitedNames[field.Name]++
+	fn := func(value reflect.Value, field reflect.StructField, name Name) (bool, error) {
+		key := name.Get(ConcatNamer)
+		visitedNames[key]++
 		return false, nil
 	}
 	expectVisited := map[string]int{
@@ -97,7 +98,7 @@ func TestWalkWrap(t *testing.T) {
 		"Document_ID_Number": 1,
 	}
 
-	err := WalkFullname(&s, WalkerFunc(fn), ConcatNamer)
+	err := Walk(&s, WalkerFunc(fn))
 	if err != nil {
 		t.Errorf("Not expected error: %v", err)
 	}
