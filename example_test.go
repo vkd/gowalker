@@ -32,9 +32,9 @@ func ExampleWalk_ConfigFromMap() {
 func ExampleWalk_SliceBindingWithDefault() {
 	var q struct {
 		Name    string   `uri:"name"`
-		Age     int      `uri:"age,default=25"`
+		Age     int      `uri:"age"`
 		Friends []string `uri:"friends"`
-		Coins   []int    `uri:"coins,default=40"`
+		Coins   []int    `uri:"coins"`
 		Keys    []int
 	}
 
@@ -46,7 +46,7 @@ func ExampleWalk_SliceBindingWithDefault() {
 	w := gowalker.NewStringWalker("uri", gowalker.MapStringsSourcer(uri))
 	err := gowalker.Walk(&q, w)
 	fmt.Printf("uri: %#v, %v", q, err)
-	// Output: uri: struct { Name string "uri:\"name\""; Age int "uri:\"age,default=25\""; Friends []string "uri:\"friends\""; Coins []int "uri:\"coins,default=40\""; Keys []int }{Name:"mike", Age:25, Friends:[]string{"igor", "alisa"}, Coins:[]int{40}, Keys:[]int(nil)}, <nil>
+	// Output: uri: struct { Name string "uri:\"name\""; Age int "uri:\"age\""; Friends []string "uri:\"friends\""; Coins []int "uri:\"coins\""; Keys []int }{Name:"mike", Age:0, Friends:[]string{"igor", "alisa"}, Coins:[]int(nil), Keys:[]int(nil)}, <nil>
 }
 
 func ExampleWalk_WalkWithMapSource() {
@@ -54,8 +54,8 @@ func ExampleWalk_WalkWithMapSource() {
 		Name string
 		DB   struct {
 			Type       string
-			PortNumber int    `config:"PORT"`
-			Username   string `config:",default=dbuser"`
+			PortNumber int `config:"PORT"`
+			Username   string
 		}
 	}
 
@@ -68,7 +68,7 @@ func ExampleWalk_WalkWithMapSource() {
 	w := gowalker.NewStringWalker("config", gowalker.MapStringSource(m))
 	err := gowalker.WalkFullname(&cfg, w, gowalker.UpperNamer)
 	fmt.Printf("cfg: %v, %v", cfg, err)
-	// Output: cfg: {service {postgres 9000 dbuser}}, <nil>
+	// Output: cfg: {service {postgres 9000 }}, <nil>
 }
 
 // var osLookupEnv = os.LookupEnv
@@ -84,7 +84,7 @@ var osLookupEnv = func(key string) (string, bool) {
 func ExampleWalk_ServiceEnvLoader() {
 	type config struct {
 		ServiceName string `env:"NAME"`
-		Port        int    `env:"PORT,default=8001"`
+		Port        int    `env:"PORT"`
 		DB          struct {
 			Address string `env:"DB_URL"`
 			Port    int    // DB_PORT
@@ -98,7 +98,7 @@ func ExampleWalk_ServiceEnvLoader() {
 	)
 	err := gowalker.WalkFullname(&c, w, gowalker.UpperNamer)
 	fmt.Printf("env: %v, %v", c, err)
-	// Output: env: {Env 8001 {postgres 5432}}, <nil>
+	// Output: env: {Env 0 {postgres 5432}}, <nil>
 }
 
 type visitedFields []string

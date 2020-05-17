@@ -8,16 +8,16 @@ import (
 
 // SliceStringGetValue - get value from field for slice of strings
 func SliceStringGetValue(tag string, source SliceSourcer, field reflect.StructField) ([]string, bool, error) {
-	t := TagStringParse(field, tag)
-	ss, ok, err := source.GetStrings(t.Value)
+	t, ok := field.Tag.Lookup(tag)
+	if !ok {
+		t = field.Name
+	}
+	ss, ok, err := source.GetStrings(t)
 	if err != nil {
 		return nil, false, err
 	}
-	if !ok && !t.IsDefaultValue {
-		return nil, false, nil
-	}
 	if !ok {
-		ss = []string{t.DefaultValue}
+		return nil, false, nil
 	}
 	return ss, true, nil
 }
