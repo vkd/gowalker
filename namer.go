@@ -1,27 +1,12 @@
 package gowalker
 
 import (
-	"reflect"
 	"strings"
 )
 
-// Walk - walk struct by all public fields
-func Walk(value interface{}, walker Walker) error {
-	return WalkFullname(value, walker, nil)
-}
-
-// WalkFullname - walk struct by all public fields with custom field name generator.
-func WalkFullname(value interface{}, walker Walker, namer Namer) error {
-	_, err := walkIface(value, walker, namer)
-	return err
-}
-
-// WalkerFunc - func implemented Walk interface
-type WalkerFunc func(value reflect.Value, field reflect.StructField) (bool, error)
-
-// Step - one step of walker
-func (f WalkerFunc) Step(value reflect.Value, field reflect.StructField) (bool, error) {
-	return f(value, field)
+// Namer - interface to get a full field name.
+type Namer interface {
+	FieldName(parent, name string) string
 }
 
 type namerFunc func(parent, name string) string
