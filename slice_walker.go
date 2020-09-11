@@ -7,7 +7,7 @@ import (
 )
 
 // SliceStringGetValue - get value from field for slice of strings
-func SliceStringGetValue(tag string, source SliceSourcer, field reflect.StructField, name Name, namer Namer) ([]string, bool, error) {
+func SliceStringGetValue(tag string, source StringsSource, field reflect.StructField, name Name, namer Namer) ([]string, bool, error) {
 	t, ok := field.Tag.Lookup(tag)
 	if !ok {
 		t = name.Get(namer)

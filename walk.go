@@ -2,12 +2,16 @@ package gowalker
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 )
 
+// ErrUnsupportedValue is raised if value is passed not as a pointer.
+var ErrUnsupportedValue = errors.New("unsupported type for value: allowed only ptr")
+
 // Walker - interface to walk through struct fields
 type Walker interface {
-	Step(value reflect.Value, field reflect.StructField, name Name) (bool, error)
+	Step(reflect.Value, reflect.StructField, Name) (isSet bool, _ error)
 }
 
 // Name of the struct field.
@@ -23,17 +27,27 @@ func (f WalkerFunc) Step(value reflect.Value, field reflect.StructField, name Na
 	return f(value, field, name)
 }
 
-// Walk - walk struct by all public fields
-func Walk(value interface{}, walker Walker) error {
-	var name = make(fieldsStack, 0, 4)
-	_, err := walkIface(value, &name, walker)
-	return err
+// Walk - walk struct by all public fields.
+//
+// Should be passed as pointer:
+// type myStruct struct
+// var s myStruct
+// gowalker.Walk(&s, ...)
+func Walk(value interface{}, walkers ...Walker) error {
+	name := make(fieldsStack, 0, 4)
+	for _, w := range walkers {
+		_, err := walkIface(value, &name, w)
+		if err != nil {
+			return fmt.Errorf("walker %T: %w", w, err)
+		}
+	}
+	return nil
 }
 
 func walkIface(value interface{}, name nameBuilder, walker Walker) (bool, error) {
 	v := reflect.ValueOf(value)
 	if v.Kind() != reflect.Ptr {
-		return false, errors.New("unsupported type for value: allowed only ptr")
+		return false, ErrUnsupportedValue
 	}
 	return walkPrt(v, emptyField, name, walker)
 }

@@ -64,7 +64,7 @@ func testWalkStruct(t *testing.T, value interface{}, w Walker, expectVisited map
 		visitedNames[field.Name]++
 		return w.Step(value, field, name)
 	}))
-	if err != expectedErr {
+	if !errors.Is(err, expectedErr) {
 		t.Errorf("Not expected error: %v", err)
 	}
 

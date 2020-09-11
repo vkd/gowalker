@@ -7,29 +7,40 @@ import (
 	"github.com/vkd/gowalker"
 )
 
-func ExampleWalk_ConfigFromMap() {
+func ExampleWalk_envConfig() {
 	var cfg struct {
-		Name string
-		DB   struct {
-			Type string
-			Port int
+		DB struct {
+			Name    string
+			Address string `env:"DB_URL"`
+			Port    int    `default:"5432" env:"DB_PORT"`
 		}
 	}
 
-	env := map[string]string{
-		"NAME":    "service",
-		"DB_TYPE": "postgres",
-		"DB_PORT": "9000",
+	// osLookupEnv := os.LookupEnv
+	osLookupEnv := func(key string) (string, bool) {
+		v, ok := map[string]string{
+			"DB_NAME": "Env",
+			"DB_URL":  "postgres",
+		}[key]
+		return v, ok
 	}
 
-	w := gowalker.NewStringWalker("config", gowalker.MapStringSource(env), gowalker.UpperNamer)
-	err := gowalker.Walk(&cfg, w)
+	err := gowalker.Walk(&cfg,
+		gowalker.Tag("default"),
 
-	fmt.Printf("cfg: %#v, %v", cfg, err)
-	// Output: cfg: struct { Name string; DB struct { Type string; Port int } }{Name:"service", DB:struct { Type string; Port int }{Type:"postgres", Port:9000}}, <nil>
+		gowalker.StringSetter(
+			gowalker.FieldKeys(
+				gowalker.Tag("env"),
+				gowalker.EnvNamer,
+			),
+			gowalker.LookupFuncSource(osLookupEnv),
+		),
+	)
+	fmt.Printf("%v, %v", cfg, err)
+	// Output: {{Env postgres 5432}}, <nil>
 }
 
-func ExampleWalk_SliceBindingWithDefault() {
+func ExampleWalk_fromMapOfStrings() {
 	var q struct {
 		Name    string   `uri:"name"`
 		Age     int      `uri:"age"`
@@ -43,63 +54,13 @@ func ExampleWalk_SliceBindingWithDefault() {
 		"friends": {"igor", "alisa"},
 	}
 
-	w := gowalker.NewStringWalker("uri", gowalker.MapStringsSourcer(uri), nil)
-	err := gowalker.Walk(&q, w)
-	fmt.Printf("uri: %#v, %v", q, err)
-	// Output: uri: struct { Name string "uri:\"name\""; Age int "uri:\"age\""; Friends []string "uri:\"friends\""; Coins []int "uri:\"coins\""; Keys []int }{Name:"mike", Age:0, Friends:[]string{"igor", "alisa"}, Coins:[]int(nil), Keys:[]int(nil)}, <nil>
-}
-
-func ExampleWalk_WalkWithMapSource() {
-	var cfg struct {
-		Name string
-		DB   struct {
-			Type       string
-			PortNumber int `config:"PORT"`
-			Username   string
-		}
-	}
-
-	m := map[string]string{
-		"NAME":    "service",
-		"DB_TYPE": "postgres",
-		"PORT":    "9000",
-	}
-
-	w := gowalker.NewStringWalker("config", gowalker.MapStringSource(m), gowalker.UpperNamer)
-	err := gowalker.Walk(&cfg, w)
-	fmt.Printf("cfg: %v, %v", cfg, err)
-	// Output: cfg: {service {postgres 9000 }}, <nil>
-}
-
-// var osLookupEnv = os.LookupEnv
-var osLookupEnv = func(key string) (string, bool) {
-	v, ok := map[string]string{
-		"NAME":    "Env",
-		"DB_URL":  "postgres",
-		"DB_PORT": "5432",
-	}[key]
-	return v, ok
-}
-
-func ExampleWalk_ServiceEnvLoader() {
-	type config struct {
-		ServiceName string `env:"NAME"`
-		Port        int    `env:"PORT"`
-		DB          struct {
-			Address string `env:"DB_URL"`
-			Port    int    // DB_PORT
-		}
-	}
-
-	var c config
-	w := gowalker.NewStringWalker(
-		"env",
-		gowalker.LookupFuncSource(osLookupEnv),
-		gowalker.UpperNamer,
+	w := gowalker.StringsSetter(
+		gowalker.Tag("uri"),
+		gowalker.MapStringsSource(uri),
 	)
-	err := gowalker.Walk(&c, w)
-	fmt.Printf("env: %v, %v", c, err)
-	// Output: env: {Env 0 {postgres 5432}}, <nil>
+	err := gowalker.Walk(&q, w)
+	fmt.Printf("%+v, %v", q, err)
+	// Output: {Name:mike Age:0 Friends:[igor alisa] Coins:[] Keys:[]}, <nil>
 }
 
 type visitedFields []string
@@ -110,7 +71,7 @@ func (f *visitedFields) Step(value reflect.Value, field reflect.StructField, nam
 	return false, nil
 }
 
-func ExampleWalk_CollectAllPublicFields() {
+func ExampleWalk_collectAllPublicFields() {
 	var config struct {
 		Name string
 		Port int

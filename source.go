@@ -1,5 +1,16 @@
 package gowalker
 
+// StringSource - source with strings as values.
+type StringSource interface {
+	Get(key string) (value string, ok bool, err error)
+	// StringsSource
+}
+
+// StringsSource - source with string slices as values.
+type StringsSource interface {
+	GetStrings(key string) (value []string, ok bool, err error)
+}
+
 // Sourcer - source of values by key.
 type Sourcer interface {
 	Get(key string) (value string, ok bool, err error)
@@ -8,7 +19,7 @@ type Sourcer interface {
 // MapStringSource - map[string]string implement Sourcer.
 type MapStringSource map[string]string
 
-var _ Sourcer = MapStringSource(nil)
+var _ StringSource = MapStringSource(nil)
 
 // Get value from source.
 func (s MapStringSource) Get(key string) (string, bool, error) {
@@ -37,6 +48,8 @@ type SliceSourcer interface {
 	GetStrings(key string) (value []string, ok bool, err error)
 }
 
+type MapStringsSource = MapStringsSourcer
+
 // MapStringsSourcer - map[string][]string implement SliceSourcer.
 type MapStringsSourcer map[string][]string
 
@@ -53,7 +66,7 @@ func (s MapStringsSourcer) Get(key string) (string, bool, error) {
 	return sliceStringsToGetString(s, key)
 }
 
-func sliceStringsToGetString(source SliceSourcer, key string) (string, bool, error) {
+func sliceStringsToGetString(source StringsSource, key string) (string, bool, error) {
 	ss, ok, err := source.GetStrings(key)
 	if err != nil || !ok {
 		return "", ok, err

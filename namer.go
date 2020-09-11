@@ -1,19 +1,15 @@
 package gowalker
 
 import (
+	"reflect"
 	"strings"
 )
 
 // Namer - interface to get a full field name.
 type Namer interface {
 	FieldName(parent, name string) string
+	FieldKeyer
 }
-
-type namerFunc func(parent, name string) string
-
-var _ Namer = namerFunc(func(_, _ string) string { return "" })
-
-func (f namerFunc) FieldName(parent, name string) string { return f(parent, name) }
 
 type appendNamer struct {
 	separator string
@@ -33,6 +29,14 @@ func (a appendNamer) FieldName(parent, name string) string {
 		return a.convFn(name)
 	}
 	return name
+}
+
+func (a appendNamer) GetFieldKey(field reflect.StructField, name Name) (string, bool) {
+	key := field.Name
+	if name != nil {
+		key = name.Get(a)
+	}
+	return key, true
 }
 
 // Fullname namer.

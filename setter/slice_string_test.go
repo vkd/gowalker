@@ -13,7 +13,7 @@ func TestSetValueBySliceOfString(t *testing.T) {
 		strs    []string
 		wantErr bool
 	}
-	var tests = []testStruct{
+	tests := []testStruct{
 		{"full slice", assert([]int{1, 4, 7}), emptyField, []string{"1", "4", "7"}, false},
 		{"full array", assert([3]bool{false, true, false}), emptyField, []string{"", "true", "0"}, false},
 
