@@ -3,9 +3,41 @@ package gowalker_test
 import (
 	"fmt"
 	"reflect"
+	"time"
 
 	"github.com/vkd/gowalker"
 )
+
+func ExampleConfig() {
+	var cfg struct {
+		Timeout time.Duration `default:"3s"`
+
+		DB struct {
+			Username string `required:""`
+			Password string `required:""`
+		}
+
+		Metrics struct {
+			Addr string `env:"METRICS_URL"`
+		}
+	}
+
+	// osLookupEnv := os.LookupEnv
+	osLookupEnv := func(key string) (string, bool) {
+		v, ok := map[string]string{
+			"DB_USERNAME": "postgres",
+			"METRICS_URL": "localhost:5678",
+		}[key]
+		return v, ok
+	}
+
+	// osArgs := os.Args
+	osArgs := []string{"gowalker", "--db-password", "example"}
+
+	err := gowalker.Config(&cfg, osLookupEnv, osArgs)
+	fmt.Printf("%v, %v", cfg, err)
+	// Output: {3s {postgres example} {localhost:5678}}, <nil>
+}
 
 func ExampleWalk_envConfig() {
 	var cfg struct {
@@ -25,17 +57,7 @@ func ExampleWalk_envConfig() {
 		return v, ok
 	}
 
-	err := gowalker.Walk(&cfg,
-		gowalker.Tag("default"),
-
-		gowalker.StringSetter(
-			gowalker.FieldKeys(
-				gowalker.Tag("env"),
-				gowalker.EnvNamer,
-			),
-			gowalker.LookupFuncSource(osLookupEnv),
-		),
-	)
+	err := gowalker.Config(&cfg, osLookupEnv, nil)
 	fmt.Printf("%v, %v", cfg, err)
 	// Output: {{Env postgres 5432}}, <nil>
 }
@@ -56,17 +78,18 @@ func ExampleWalk_fromMapOfStrings() {
 
 	w := gowalker.StringsSetter(
 		gowalker.Tag("uri"),
+		gowalker.DefaultNamer,
 		gowalker.MapStringsSource(uri),
 	)
-	err := gowalker.Walk(&q, w)
+	err := gowalker.Walk(&q, gowalker.MakeFields(1), w)
 	fmt.Printf("%+v, %v", q, err)
 	// Output: {Name:mike Age:0 Friends:[igor alisa] Coins:[] Keys:[]}, <nil>
 }
 
 type visitedFields []string
 
-func (f *visitedFields) Step(value reflect.Value, field reflect.StructField, name gowalker.Name) (set bool, err error) {
-	key := name.Get(gowalker.DashToLoverNamer)
+func (f *visitedFields) TrySet(value reflect.Value, field reflect.StructField, fs gowalker.Fields) (set bool, err error) {
+	key := gowalker.FieldKey("", gowalker.DashToLoverNamer, fs)
 	*f = append(*f, key)
 	return false, nil
 }
@@ -82,7 +105,7 @@ func ExampleWalk_collectAllPublicFields() {
 	}
 
 	var fs visitedFields
-	err := gowalker.Walk(&config, &fs)
+	err := gowalker.Walk(&config, gowalker.MakeFields(2), &fs)
 	fmt.Printf("fields: %v, %v", fs, err)
 	// Output: fields: [name port db db-url db-port], <nil>
 }

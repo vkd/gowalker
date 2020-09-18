@@ -12,17 +12,14 @@ func TestWalkBaseStruct(t *testing.T) {
 		ID   *struct {
 			Number int
 		}
-		sex string // nolint: unused
-	}
-	fn := func(value reflect.Value, field reflect.StructField, name Name) (bool, error) {
-		return false, nil
+		sex string
 	}
 	expectVisited := map[string]int{
 		"Name":   1,
 		"ID":     1,
 		"Number": 1,
 	}
-	testWalkStruct(t, &s, WalkerFunc(fn), expectVisited, nil)
+	testWalkStruct(t, &s, nil, expectVisited, nil)
 }
 
 func TestWalkStructSet(t *testing.T) {
@@ -31,7 +28,7 @@ func TestWalkStructSet(t *testing.T) {
 			Number int
 		}
 	}
-	fn := func(value reflect.Value, field reflect.StructField, name Name) (bool, error) {
+	fn := func(value reflect.Value, field reflect.StructField, _ Fields) (bool, error) {
 		if field.Name == "ID" {
 			return true, nil
 		}
@@ -40,7 +37,7 @@ func TestWalkStructSet(t *testing.T) {
 	expectVisited := map[string]int{
 		"ID": 1,
 	}
-	testWalkStruct(t, &s, WalkerFunc(fn), expectVisited, nil)
+	testWalkStruct(t, &s, SetterFunc(fn), expectVisited, nil)
 }
 
 func TestWalkFuncError(t *testing.T) {
@@ -48,21 +45,24 @@ func TestWalkFuncError(t *testing.T) {
 		Name int
 	}
 	expectedErr := errors.New("expected error")
-	fn := func(value reflect.Value, field reflect.StructField, name Name) (bool, error) {
+	fn := func(value reflect.Value, field reflect.StructField, _ Fields) (bool, error) {
 		return false, expectedErr
 	}
 	expectVisited := map[string]int{
 		"Name": 1,
 	}
-	testWalkStruct(t, &s, WalkerFunc(fn), expectVisited, expectedErr)
+	testWalkStruct(t, &s, SetterFunc(fn), expectVisited, expectedErr)
 }
 
-func testWalkStruct(t *testing.T, value interface{}, w Walker, expectVisited map[string]int, expectedErr error) {
+func testWalkStruct(t *testing.T, value interface{}, w Setter, expectVisited map[string]int, expectedErr error) {
 	visitedNames := make(map[string]int)
 
-	err := Walk(value, WalkerFunc(func(value reflect.Value, field reflect.StructField, name Name) (bool, error) {
+	err := Walk(value, make(Fields, 0, 4), SetterFunc(func(value reflect.Value, field reflect.StructField, fs Fields) (bool, error) {
 		visitedNames[field.Name]++
-		return w.Step(value, field, name)
+		if w == nil {
+			return false, nil
+		}
+		return w.TrySet(value, field, fs)
 	}))
 	if !errors.Is(err, expectedErr) {
 		t.Errorf("Not expected error: %v", err)
@@ -86,29 +86,34 @@ func TestWalkWrap(t *testing.T) {
 			}
 		}
 	}
-	visitedNames := make(map[string]int)
-	fn := func(value reflect.Value, field reflect.StructField, name Name) (bool, error) {
-		key := name.Get(ConcatNamer)
-		visitedNames[key]++
-		return false, nil
-	}
+	visitedNames := visitedNames{visits: make(map[string]int)}
 	expectVisited := map[string]int{
 		"Document":           1,
-		"Document_ID":        1,
-		"Document_ID_Number": 1,
+		"Document.ID":        1,
+		"Document.ID.Number": 1,
 	}
 
-	err := Walk(&s, WalkerFunc(fn))
+	err := Walk(&s, make(Fields, 0, 3), visitedNames)
 	if err != nil {
 		t.Errorf("Not expected error: %v", err)
 	}
 
-	if len(visitedNames) != len(expectVisited) {
+	if len(visitedNames.visits) != len(expectVisited) {
 		t.Errorf("Wrong count of visited names: %#v", visitedNames)
 	}
 	for k, v := range expectVisited {
-		if visitedNames[k] != v {
-			t.Errorf("Wrong count of %v: %v (expect: %v) %#v", k, visitedNames[k], v, visitedNames)
+		if visitedNames.visits[k] != v {
+			t.Errorf("Wrong count of %v: %v (expect: %v) %#v", k, visitedNames.visits[k], v, visitedNames)
 		}
 	}
+}
+
+type visitedNames struct {
+	visits map[string]int
+}
+
+func (v visitedNames) TrySet(value reflect.Value, field reflect.StructField, fs Fields) (bool, error) {
+	key := FieldKey("", StructFieldNamer, fs)
+	v.visits[key]++
+	return false, nil
 }

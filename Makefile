@@ -25,5 +25,5 @@ BENCH_FILE=bench.old
 BENCH_COUNT=5
 bench-delta:
 	@rm -f ${BENCH_FILE}
-	for i in {1..${BENCH_COUNT}}; do /bin/echo -n "$$i.."; go test -bench=. >> ${BENCH_FILE}; done
+	for i in {1..${BENCH_COUNT}}; do /bin/echo -n "$$i.."; go test -benchmem -bench=. >> ${BENCH_FILE}; done
 	@/bin/echo "Done"

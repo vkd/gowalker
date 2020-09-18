@@ -9,18 +9,18 @@ import (
 )
 
 var (
-	// ErrNotSupportKind - kind not support to set by string
+	// ErrNotSupportKind - kind not support to set by string.
 	ErrNotSupportKind = errors.New("not support kind")
-	// ErrNotImplemented - not implemented yet functionality
+	// ErrNotImplemented - not implemented yet functionality.
 	ErrNotImplemented = errors.New("not implemented")
-	// ErrNotSetField - field cannot be set
+	// ErrNotSetField - field cannot be set.
 	ErrNotSetField = errors.New("cannot be set")
 )
 
 // SetString - set value by string
 //
-// Not implemented kinds: Complex, Chan
-func SetString(value reflect.Value, field reflect.StructField, str string) error { // nolint: gocyclo
+// Not implemented kinds: Complex, Chan.
+func SetString(value reflect.Value, field reflect.StructField, str string) error {
 	if !value.CanSet() {
 		return ErrNotSetField
 	}
