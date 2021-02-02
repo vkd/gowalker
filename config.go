@@ -36,6 +36,10 @@ func Config(cfg interface{}, osLookupEnv LookupFuncSource, osArgs []string) erro
 	}
 
 	err = Walk(cfg, fs, SetterFunc(func(value reflect.Value, field reflect.StructField, fs Fields) (bool, error) {
+		_, ok := updatedFields[FieldKey("", StructFieldNamer, fs)]
+		if ok {
+			return false, nil
+		}
 		for _, s := range setters {
 			ok, err := s.TrySet(value, field, fs)
 			if err != nil {
