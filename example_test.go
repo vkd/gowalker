@@ -3,13 +3,22 @@ package gowalker_test
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/vkd/gowalker"
 )
 
+type titleName string
+
+func (c *titleName) SetString(s string) error {
+	*c = titleName(strings.Title(s))
+	return nil
+}
+
 func ExampleConfig() {
 	var cfg struct {
+		Name    titleName
 		Timeout time.Duration `default:"3s"`
 
 		DB struct {
@@ -32,11 +41,11 @@ func ExampleConfig() {
 	}
 
 	// osArgs := os.Args
-	osArgs := []string{"gowalker", "--timeout=5s", "--db-password", "example"}
+	osArgs := []string{"gowalker", "--timeout=5s", "--db-password", "example", "--name=gowalker"}
 
 	err := gowalker.Config(&cfg, osLookupEnv, osArgs)
 	fmt.Printf("%v, %v", cfg, err)
-	// Output: {5s {postgres example} {localhost:5678}}, <nil>
+	// Output: {Gowalker 5s {postgres example} {localhost:5678}}, <nil>
 }
 
 func ExampleWalk_envConfig() {

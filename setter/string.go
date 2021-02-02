@@ -17,12 +17,20 @@ var (
 	ErrNotSetField = errors.New("cannot be set")
 )
 
+type SetStringer interface {
+	SetString(string) error
+}
+
 // SetString - set value by string
 //
 // Not implemented kinds: Complex, Chan.
 func SetString(value reflect.Value, field reflect.StructField, str string) error {
 	if !value.CanSet() {
 		return ErrNotSetField
+	}
+
+	if s, ok := value.Addr().Interface().(SetStringer); ok {
+		return s.SetString(str)
 	}
 
 	switch value.Kind() {
