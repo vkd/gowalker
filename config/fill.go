@@ -23,5 +23,14 @@ import (
 //
 // DB_USERNAME=postgres ./app --port=8000 --db-port=5432 --postgres-timeout 3s.
 func Fill(ptr interface{}) error {
-	return gowalker.Config(ptr, os.LookupEnv, os.Args)
+	return gowalker.Config(ptr, DefaultSetters()...)
+}
+
+func DefaultSetters() []gowalker.Setter {
+	return []gowalker.Setter{
+		gowalker.Flags("flag", gowalker.FlagNamer, os.Args),
+		gowalker.Envs("env", gowalker.EnvNamer, os.LookupEnv),
+		gowalker.Tag("default"),
+		gowalker.Required("required"),
+	}
 }

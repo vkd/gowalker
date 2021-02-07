@@ -4,11 +4,55 @@ import (
 	"flag"
 	"fmt"
 	"reflect"
+	"sync"
 
 	"github.com/vkd/gowalker/setter"
 )
 
-func FlagWalk(ptr interface{}, fs Fields, osArgs []string) (UpdatedFields, error) {
+func Flags(tag Tag, namer AppendNamer, osArgs []string) Setter {
+	return &flagSetter{tag: tag, namer: namer, osArgs: osArgs}
+}
+
+type flagSetter struct {
+	mx            sync.Mutex
+	initialized   bool
+	updatedFields UpdatedFields
+
+	tag    Tag
+	namer  AppendNamer
+	osArgs []string
+}
+
+func (f *flagSetter) Init(ptr interface{}) error {
+	f.mx.Lock()
+	defer f.mx.Unlock()
+	if f.initialized {
+		return nil
+	}
+
+	updated, err := FlagWalk(ptr, make(Fields, 6), f.tag, f.namer, f.osArgs)
+	if err != nil {
+		return fmt.Errorf("parse flags: %w", err)
+	}
+
+	f.updatedFields = updated
+	f.initialized = true
+	return nil
+}
+
+func (f *flagSetter) TrySet(v reflect.Value, sf reflect.StructField, fs Fields) (ok bool, _ error) {
+	f.mx.Lock()
+	defer f.mx.Unlock()
+
+	if !f.initialized {
+		return false, fmt.Errorf("setter is not initialized")
+	}
+
+	_, ok = f.updatedFields[FieldKey("", StructFieldNamer, fs)]
+	return ok, nil
+}
+
+func FlagWalk(ptr interface{}, fs Fields, tag Tag, namer AppendNamer, osArgs []string) (UpdatedFields, error) {
 	var name string
 	if len(osArgs) > 0 {
 		name = osArgs[0]
@@ -20,8 +64,8 @@ func FlagWalk(ptr interface{}, fs Fields, osArgs []string) (UpdatedFields, error
 	fset := flag.NewFlagSet(name, flag.ContinueOnError)
 
 	err := Walk(ptr, fs, flagWalker{
-		tag:           Tag("flag"),
-		namer:         FlagNamer,
+		tag:           tag,
+		namer:         namer,
 		fset:          fset,
 		updatedFields: updatedFields,
 	})

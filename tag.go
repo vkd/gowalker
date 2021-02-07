@@ -22,21 +22,14 @@ func (t Tag) TrySet(value reflect.Value, field reflect.StructField, _ Fields) (b
 	return true, setter.SetString(value, field, v)
 }
 
-func Required(tag Tag, updatedFields UpdatedFields) Setter {
-	return required{tag: tag, updatedFields: updatedFields}
-}
-
 var ErrRequiredField = errors.New("field is required")
 
-type required struct {
-	tag           Tag
-	updatedFields UpdatedFields
-}
+type Required Tag
 
-var _ Setter = required{}
+var _ Setter = Required("")
 
-func (r required) TrySet(value reflect.Value, field reflect.StructField, fs Fields) (bool, error) {
-	t, ok := field.Tag.Lookup(string(r.tag))
+func (r Required) TrySet(value reflect.Value, field reflect.StructField, fs Fields) (bool, error) {
+	t, ok := field.Tag.Lookup(string(r))
 	if !ok {
 		return false, nil
 	}
@@ -44,14 +37,6 @@ func (r required) TrySet(value reflect.Value, field reflect.StructField, fs Fiel
 	switch t {
 	case "0", "f", "F", "false", "FALSE", "False":
 		return false, nil
-	}
-
-	if r.updatedFields != nil {
-		key := FieldKey("", StructFieldNamer, fs)
-		_, ok = r.updatedFields[key]
-		if ok {
-			return false, nil
-		}
 	}
 
 	return false, fmt.Errorf("%s: %w", field.Name, ErrRequiredField)

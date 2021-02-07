@@ -2,7 +2,6 @@ package gowalker
 
 import (
 	"fmt"
-	"reflect"
 )
 
 // Config fills config structure.
@@ -21,39 +20,26 @@ import (
 // err := gowalker.Config(&cfg, os.LookupEnv, os.Args)
 //
 // DB_USERNAME=postgres ./app --port=8000 --db-port=5432 --postgres-timeout 3s.
-func Config(cfg interface{}, osLookupEnv LookupFuncSource, osArgs []string) error {
+func Config(cfg interface{}, setters ...Setter) error {
+	for _, s := range setters {
+		if i, ok := s.(Initer); ok {
+			err := i.Init(cfg)
+			if err != nil {
+				return fmt.Errorf("init %T setter: %w", i, err)
+			}
+		}
+	}
+
 	fs := make(Fields, 0, 6)
 
-	updatedFields, err := FlagWalk(cfg, fs, osArgs)
-	if err != nil {
-		return fmt.Errorf("flag walk: %w", err)
-	}
-
-	setters := []Setter{
-		StringSetter("env", EnvNamer, osLookupEnv),
-		Tag("default"),
-		Required("required", updatedFields),
-	}
-
-	err = Walk(cfg, fs, SetterFunc(func(value reflect.Value, field reflect.StructField, fs Fields) (bool, error) {
-		_, ok := updatedFields[FieldKey("", StructFieldNamer, fs)]
-		if ok {
-			return false, nil
-		}
-		for _, s := range setters {
-			ok, err := s.TrySet(value, field, fs)
-			if err != nil {
-				return ok, fmt.Errorf("setter %T: %w", s, err)
-			}
-			if ok {
-				return true, nil
-			}
-		}
-		return false, nil
-	}))
+	err := Walk(cfg, fs, MultiSetterOR(setters...))
 	if err != nil {
 		return fmt.Errorf("walk through config structure: %w", err)
 	}
 
 	return nil
+}
+
+type Initer interface {
+	Init(cfg interface{}) error
 }

@@ -43,7 +43,12 @@ func ExampleConfig() {
 	// osArgs := os.Args
 	osArgs := []string{"gowalker", "--timeout=5s", "--db-password", "example", "--name=gowalker"}
 
-	err := gowalker.Config(&cfg, osLookupEnv, osArgs)
+	err := gowalker.Config(&cfg,
+		gowalker.Flags("flag", gowalker.Fullname("-", strings.ToLower), osArgs),
+		gowalker.Envs("env", gowalker.Fullname("_", strings.ToUpper), osLookupEnv),
+		gowalker.Tag("default"),
+		gowalker.Required("required"),
+	)
 	fmt.Printf("%v, %v", cfg, err)
 	// Output: {Gowalker 5s {postgres example} {localhost:5678}}, <nil>
 }
@@ -66,7 +71,10 @@ func ExampleWalk_envConfig() {
 		return v, ok
 	}
 
-	err := gowalker.Config(&cfg, osLookupEnv, nil)
+	err := gowalker.Config(&cfg,
+		gowalker.Envs("env", gowalker.Fullname("_", strings.ToUpper), osLookupEnv),
+		gowalker.Tag("default"),
+	)
 	fmt.Printf("%v, %v", cfg, err)
 	// Output: {{Env postgres 5432}}, <nil>
 }

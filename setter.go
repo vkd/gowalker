@@ -17,3 +17,7 @@ func StringsSetter(tag Tag, namer AppendNamer, source StringsSource) Setter {
 		return SetStringsSource(value, field, source, key)
 	})
 }
+
+func Envs(tag Tag, namer AppendNamer, osLookupEnv LookupFuncSource) Setter {
+	return StringSetter(tag, namer, osLookupEnv)
+}

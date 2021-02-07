@@ -24,6 +24,25 @@ func (f SetterFunc) TrySet(value reflect.Value, field reflect.StructField, fs Fi
 	return f(value, field, fs)
 }
 
+// MultiSetterOR - set value only one (first returns true).
+func MultiSetterOR(ss ...Setter) Setter {
+	if len(ss) == 1 {
+		return ss[0]
+	}
+	return SetterFunc(func(v reflect.Value, sf reflect.StructField, f Fields) (bool, error) {
+		for _, s := range ss {
+			ok, err := s.TrySet(v, sf, f)
+			if err != nil {
+				return ok, fmt.Errorf("setter %T: %w", s, err)
+			}
+			if ok {
+				return true, nil
+			}
+		}
+		return false, nil
+	})
+}
+
 // Walk - walk struct by all public fields.
 //
 // Should be passed as pointer:
