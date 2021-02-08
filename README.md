@@ -19,7 +19,7 @@ $ go get github.com/vkd/gowalker
 
 ```go
 import (
-	"github.com/vkd/gowalker/config"
+	"github.com/vkd/gowalker"
 )
 
 type Config struct {
@@ -33,6 +33,11 @@ type Config struct {
 
 func ParseConfig() {
 	var c Config
-	err := config.Fill(&c)
+	err := gowalker.Config(&c,
+		gowalker.Flags("flag", gowalker.FlagNamer, os.Args),
+		gowalker.Envs("env", gowalker.EnvNamer, os.LookupEnv),
+		gowalker.Tag("default"),
+		gowalker.Required("required"),
+	)
 }
 ```

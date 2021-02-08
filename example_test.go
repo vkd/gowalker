@@ -53,32 +53,6 @@ func ExampleConfig() {
 	// Output: {Gowalker 5s {postgres example} {localhost:5678}}, <nil>
 }
 
-func ExampleWalk_envConfig() {
-	var cfg struct {
-		DB struct {
-			Name    string
-			Address string `env:"DB_URL"`
-			Port    int    `default:"5432" env:"DB_PORT"`
-		}
-	}
-
-	// osLookupEnv := os.LookupEnv
-	osLookupEnv := func(key string) (string, bool) {
-		v, ok := map[string]string{
-			"DB_NAME": "Env",
-			"DB_URL":  "postgres",
-		}[key]
-		return v, ok
-	}
-
-	err := gowalker.Config(&cfg,
-		gowalker.Envs("env", gowalker.Fullname("_", strings.ToUpper), osLookupEnv),
-		gowalker.Tag("default"),
-	)
-	fmt.Printf("%v, %v", cfg, err)
-	// Output: {{Env postgres 5432}}, <nil>
-}
-
 func ExampleWalk_fromMapOfStrings() {
 	var q struct {
 		Name    string   `uri:"name"`
