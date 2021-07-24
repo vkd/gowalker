@@ -9,50 +9,50 @@ import (
 	"github.com/vkd/gowalker/setter"
 )
 
-func Flags(tag Tag, namer AppendNamer, osArgs []string) Setter {
-	return &flagSetter{tag: tag, namer: namer, osArgs: osArgs}
+func Flags(fk FieldKeyer, osArgs []string) *Flag {
+	return &Flag{FieldKeyer: fk, OsArgs: osArgs}
 }
 
-type flagSetter struct {
+type Flag struct {
 	mx            sync.Mutex
-	initialized   bool
 	updatedFields UpdatedFields
 
-	tag    Tag
-	namer  AppendNamer
-	osArgs []string
+	FieldKeyer
+	OsArgs []string
 }
 
-func (f *flagSetter) Init(ptr interface{}) error {
+func (*Flag) Name() string {
+	return "flag"
+}
+
+func (f *Flag) Init(ptr interface{}) error {
 	f.mx.Lock()
 	defer f.mx.Unlock()
-	if f.initialized {
-		return nil
-	}
 
-	updated, err := FlagWalk(ptr, make(Fields, 6), f.tag, f.namer, f.osArgs)
+	updated, err := FlagWalk(ptr, make(Fields, 6), f.FieldKeyer, f.OsArgs)
 	if err != nil {
 		return fmt.Errorf("parse flags: %w", err)
 	}
-
 	f.updatedFields = updated
-	f.initialized = true
+
 	return nil
 }
 
-func (f *flagSetter) TrySet(v reflect.Value, sf reflect.StructField, fs Fields) (ok bool, _ error) {
+func (f *Flag) Step(v reflect.Value, sf reflect.StructField, fs Fields) (ok bool, _ error) {
 	f.mx.Lock()
 	defer f.mx.Unlock()
 
-	if !f.initialized {
-		return false, fmt.Errorf("setter is not initialized")
-	}
-
-	_, ok = f.updatedFields[FieldKey("", StructFieldNamer, fs)]
-	return ok, nil
+	return f.updatedFields.Has(fs), nil
 }
 
-func FlagWalk(ptr interface{}, fs Fields, tag Tag, namer AppendNamer, osArgs []string) (UpdatedFields, error) {
+func (f *Flag) Doc(field reflect.StructField, fs Fields) string {
+	v, _ := f.FieldKeyer.FieldKey(field, fs)
+	return v
+}
+
+var ErrHelp = fmt.Errorf("print help")
+
+func FlagWalk(ptr interface{}, fs Fields, kb FieldKeyer, osArgs []string) (UpdatedFields, error) {
 	var name string
 	if len(osArgs) > 0 {
 		name = osArgs[0]
@@ -62,10 +62,11 @@ func FlagWalk(ptr interface{}, fs Fields, tag Tag, namer AppendNamer, osArgs []s
 	updatedFields := make(UpdatedFields)
 
 	fset := flag.NewFlagSet(name, flag.ContinueOnError)
+	hLong := fset.Bool("help", false, "print help")
+	hShort := fset.Bool("h", false, "print help")
 
 	err := Walk(ptr, fs, flagWalker{
-		tag:           tag,
-		namer:         namer,
+		FieldKeyer:    kb,
 		fset:          fset,
 		updatedFields: updatedFields,
 	})
@@ -78,17 +79,20 @@ func FlagWalk(ptr interface{}, fs Fields, tag Tag, namer AppendNamer, osArgs []s
 		return updatedFields, fmt.Errorf("parse flags: %w", err)
 	}
 
+	if *hLong || *hShort {
+		return nil, ErrHelp
+	}
+
 	return updatedFields, nil
 }
 
 type flagWalker struct {
-	tag           Tag
-	namer         AppendNamer
+	FieldKeyer
 	fset          *flag.FlagSet
 	updatedFields UpdatedFields
 }
 
-func (f flagWalker) TrySet(value reflect.Value, field reflect.StructField, fs Fields) (isSet bool, _ error) {
+func (f flagWalker) Step(value reflect.Value, field reflect.StructField, fs Fields) (isSet bool, _ error) {
 	if f.fset == nil {
 		return false, nil
 	}
@@ -96,8 +100,11 @@ func (f flagWalker) TrySet(value reflect.Value, field reflect.StructField, fs Fi
 		return false, nil
 	}
 
-	key := FieldKey(f.tag, f.namer, fs)
-	fieldPath := FieldKey("", StructFieldNamer, fs)
+	key, ok := f.FieldKey(field, fs)
+	if !ok {
+		return false, nil
+	}
+	fieldPath := KeyUpdatedFields(fs)
 
 	f.fset.Var(fieldValue{Value: value, StructField: field, fieldPath: fieldPath, updatedFields: f.updatedFields}, key, fieldPath)
 
@@ -112,15 +119,18 @@ type fieldValue struct {
 	updatedFields UpdatedFields
 }
 
-var _ flag.Value = fieldValue{}
-
-func (f fieldValue) String() string {
-	return "StructField"
-}
-
 func (f fieldValue) Set(s string) error {
 	f.updatedFields[f.fieldPath] = struct{}{}
 	return setter.SetString(f.Value, f.StructField, s)
 }
 
 type UpdatedFields map[string]struct{}
+
+func KeyUpdatedFields(fs Fields) string {
+	return StructFieldNamer.Key(fs)
+}
+
+func (u UpdatedFields) Has(fs Fields) bool {
+	_, ok := u[KeyUpdatedFields(fs)]
+	return ok
+}

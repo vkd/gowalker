@@ -1,9 +1,11 @@
 package gowalker_test
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/vkd/gowalker"
+	"github.com/vkd/gowalker/setter"
 )
 
 func BenchmarkWalk_NewWalker(b *testing.B) {
@@ -23,10 +25,9 @@ func BenchmarkWalk_NewWalker(b *testing.B) {
 
 	fs := gowalker.MakeFields(2)
 
-	w := gowalker.StringSetter(
-		"config",
-		gowalker.UpperNamer,
-		gowalker.MapStringSource(env),
+	w := StringSetter(
+		gowalker.FieldKey("config", gowalker.UpperNamer),
+		MapStringSource(env),
 	)
 
 	b.ResetTimer()
@@ -58,10 +59,9 @@ func BenchmarkWalk_MapSource(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		err := gowalker.Walk(&cfg, fs,
-			gowalker.StringSetter(
-				"config",
-				gowalker.UpperNamer,
-				gowalker.MapStringSource(env),
+			StringSetter(
+				gowalker.FieldKey("config", gowalker.UpperNamer),
+				MapStringSource(env),
 			),
 		)
 		if err != nil {
@@ -85,10 +85,9 @@ func BenchmarkWalk_NewWalker_ConcatNamer(b *testing.B) {
 		"DB.Port": "9000",
 	}
 
-	w := gowalker.StringSetter(
-		"config",
-		gowalker.StructFieldNamer,
-		gowalker.MapStringSource(env),
+	w := StringSetter(
+		gowalker.FieldKey("config", gowalker.StructFieldNamer),
+		MapStringSource(env),
 	)
 
 	fs := gowalker.MakeFields(2)
@@ -100,4 +99,20 @@ func BenchmarkWalk_NewWalker_ConcatNamer(b *testing.B) {
 			b.Fatalf("Error on walk: %v", err)
 		}
 	}
+}
+
+type MapStringSource map[string]string
+
+func StringSetter(fk gowalker.FieldKeyer, m MapStringSource) gowalker.Walker {
+	return gowalker.WalkerFunc(func(value reflect.Value, field reflect.StructField, fs gowalker.Fields) (stop bool, _ error) {
+		key, ok := fk.FieldKey(field, fs)
+		if !ok {
+			return false, nil
+		}
+		v, ok := m[key]
+		if !ok {
+			return false, nil
+		}
+		return true, setter.SetString(value, field, v)
+	})
 }

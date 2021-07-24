@@ -7,12 +7,14 @@ import (
 	"time"
 
 	"github.com/vkd/gowalker"
+	"github.com/vkd/gowalker/config"
+	"github.com/vkd/gowalker/setter"
 )
 
 type titleName string
 
 func (c *titleName) SetString(s string) error {
-	*c = titleName(strings.Title(s))
+	*c = titleName(strings.Title(s) + "!")
 	return nil
 }
 
@@ -43,14 +45,14 @@ func ExampleConfig() {
 	// osArgs := os.Args
 	osArgs := []string{"gowalker", "--timeout=5s", "--db-password", "example", "--name=gowalker"}
 
-	err := gowalker.Config(&cfg,
-		gowalker.Flags("flag", gowalker.Fullname("-", strings.ToLower), osArgs),
-		gowalker.Envs("env", gowalker.Fullname("_", strings.ToUpper), osLookupEnv),
+	err := config.Walk(&cfg, nil,
+		gowalker.Flags(gowalker.FieldKey("flag", gowalker.Fullname("-", strings.ToLower)), osArgs),
+		gowalker.Envs(gowalker.FieldKey("env", gowalker.Fullname("_", strings.ToUpper)), osLookupEnv),
 		gowalker.Tag("default"),
 		gowalker.Required("required"),
 	)
 	fmt.Printf("%v, %v", cfg, err)
-	// Output: {Gowalker 5s {postgres example} {localhost:5678}}, <nil>
+	// Output: {Gowalker! 5s {postgres example} {localhost:5678}}, <nil>
 }
 
 func ExampleWalk_fromMapOfStrings() {
@@ -67,11 +69,18 @@ func ExampleWalk_fromMapOfStrings() {
 		"friends": {"igor", "alisa"},
 	}
 
-	w := gowalker.StringsSetter(
-		gowalker.Tag("uri"),
-		gowalker.DefaultNamer,
-		gowalker.MapStringsSource(uri),
-	)
+	fk := gowalker.FieldKey("uri", gowalker.DefaultNamer)
+	w := gowalker.WalkerFunc(func(value reflect.Value, field reflect.StructField, fs gowalker.Fields) (stop bool, _ error) {
+		key, ok := fk.FieldKey(field, fs)
+		if !ok {
+			return false, nil
+		}
+		v, ok := uri[key]
+		if !ok {
+			return false, nil
+		}
+		return true, setter.SetSliceStrings(value, field, v)
+	})
 	err := gowalker.Walk(&q, gowalker.MakeFields(1), w)
 	fmt.Printf("%+v, %v", q, err)
 	// Output: {Name:mike Age:0 Friends:[igor alisa] Coins:[] Keys:[]}, <nil>
@@ -79,8 +88,8 @@ func ExampleWalk_fromMapOfStrings() {
 
 type visitedFields []string
 
-func (f *visitedFields) TrySet(value reflect.Value, field reflect.StructField, fs gowalker.Fields) (set bool, err error) {
-	key := gowalker.FieldKey("", gowalker.DashToLoverNamer, fs)
+func (f *visitedFields) Step(value reflect.Value, field reflect.StructField, fs gowalker.Fields) (set bool, err error) {
+	key := gowalker.DashToLoverNamer.Key(fs)
 	*f = append(*f, key)
 	return false, nil
 }

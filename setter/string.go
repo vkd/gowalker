@@ -79,7 +79,7 @@ func SetString(value reflect.Value, field reflect.StructField, str string) error
 
 	// Other
 	case reflect.Array:
-		return arrayStringSetter(value, field, []string{str})
+		return arrayStringSetter(value, field, str)
 
 	case reflect.Chan:
 		return ErrNotImplemented
@@ -94,7 +94,7 @@ func SetString(value reflect.Value, field reflect.StructField, str string) error
 		return SetString(value.Elem(), field, str)
 
 	case reflect.Slice:
-		return sliceStringSetter(value, field, []string{str})
+		return sliceStringSetter(value, field, str)
 
 	case reflect.String:
 		value.SetString(str)
@@ -202,9 +202,9 @@ var (
 	float64StrSetter = floatStringSetterFunc(64)
 )
 
-func sliceStringSetter(value reflect.Value, field reflect.StructField, strs []string) error {
+func sliceStringSetter(value reflect.Value, field reflect.StructField, strs ...string) error {
 	slice := reflect.MakeSlice(value.Type(), len(strs), len(strs))
-	err := arrayStringSetter(slice, field, strs)
+	err := arrayStringSetter(slice, field, strs...)
 	if err != nil {
 		return err
 	}
@@ -212,7 +212,7 @@ func sliceStringSetter(value reflect.Value, field reflect.StructField, strs []st
 	return nil
 }
 
-func arrayStringSetter(value reflect.Value, field reflect.StructField, strs []string) error {
+func arrayStringSetter(value reflect.Value, field reflect.StructField, strs ...string) error {
 	for i, s := range strs {
 		err := SetString(value.Index(i), field, s)
 		if err != nil {

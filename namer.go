@@ -5,27 +5,16 @@ import (
 	"strings"
 )
 
-func FieldKey(tag Tag, namer AppendNamer, fs Fields) string {
-	var key string
-	for _, field := range fs {
-		if tag != "" {
-			k, ok := field.Tag.Lookup(string(tag))
-			if ok {
-				key = k
-				continue
-			}
-		}
-		key = namer.FieldKey(key, field)
-	}
-	return key
+type Namer interface {
+	Key(fs Fields) string
 }
 
-type AppendNamer struct {
+type appendNamer struct {
 	separator string
 	convFn    func(string) string
 }
 
-func (a AppendNamer) FieldKey(parent string, field reflect.StructField) string {
+func (a appendNamer) FieldKey(parent string, field reflect.StructField) string {
 	name := field.Name
 	if parent != "" {
 		if a.convFn != nil {
@@ -39,9 +28,17 @@ func (a AppendNamer) FieldKey(parent string, field reflect.StructField) string {
 	return name
 }
 
+func (a appendNamer) Key(fs Fields) string {
+	var key string
+	for _, f := range fs {
+		key = a.FieldKey(key, f)
+	}
+	return key
+}
+
 // Fullname namer.
-func Fullname(sep string, convFn func(string) string) AppendNamer {
-	return AppendNamer{sep, convFn}
+func Fullname(sep string, convFn func(string) string) Namer {
+	return appendNamer{sep, convFn}
 }
 
 // UpperNamer - concat a uppercase parent's name with a uppercase child's one with underscore.

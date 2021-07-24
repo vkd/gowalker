@@ -9,9 +9,9 @@ import "reflect"
 func SetSliceStrings(value reflect.Value, field reflect.StructField, strs []string) error {
 	switch value.Kind() {
 	case reflect.Slice:
-		return sliceStringSetter(value, field, strs)
+		return sliceStringSetter(value, field, strs...)
 	case reflect.Array:
-		return arrayStringSetter(value, field, strs)
+		return arrayStringSetter(value, field, strs...)
 	default:
 		var str string
 		if len(strs) > 0 {

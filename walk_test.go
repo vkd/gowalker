@@ -37,7 +37,7 @@ func TestWalkStructSet(t *testing.T) {
 	expectVisited := map[string]int{
 		"ID": 1,
 	}
-	testWalkStruct(t, &s, SetterFunc(fn), expectVisited, nil)
+	testWalkStruct(t, &s, WalkerFunc(fn), expectVisited, nil)
 }
 
 func TestWalkFuncError(t *testing.T) {
@@ -51,18 +51,18 @@ func TestWalkFuncError(t *testing.T) {
 	expectVisited := map[string]int{
 		"Name": 1,
 	}
-	testWalkStruct(t, &s, SetterFunc(fn), expectVisited, expectedErr)
+	testWalkStruct(t, &s, WalkerFunc(fn), expectVisited, expectedErr)
 }
 
-func testWalkStruct(t *testing.T, value interface{}, w Setter, expectVisited map[string]int, expectedErr error) {
+func testWalkStruct(t *testing.T, value interface{}, w Walker, expectVisited map[string]int, expectedErr error) {
 	visitedNames := make(map[string]int)
 
-	err := Walk(value, make(Fields, 0, 4), SetterFunc(func(value reflect.Value, field reflect.StructField, fs Fields) (bool, error) {
+	err := Walk(value, make(Fields, 0, 4), WalkerFunc(func(value reflect.Value, field reflect.StructField, fs Fields) (bool, error) {
 		visitedNames[field.Name]++
 		if w == nil {
 			return false, nil
 		}
-		return w.TrySet(value, field, fs)
+		return w.Step(value, field, fs)
 	}))
 	if !errors.Is(err, expectedErr) {
 		t.Errorf("Not expected error: %v", err)
@@ -112,8 +112,8 @@ type visitedNames struct {
 	visits map[string]int
 }
 
-func (v visitedNames) TrySet(value reflect.Value, field reflect.StructField, fs Fields) (bool, error) {
-	key := FieldKey("", StructFieldNamer, fs)
+func (v visitedNames) Step(value reflect.Value, field reflect.StructField, fs Fields) (bool, error) {
+	key := StructFieldNamer.Key(fs)
 	v.visits[key]++
 	return false, nil
 }

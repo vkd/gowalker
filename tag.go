@@ -8,28 +8,48 @@ import (
 	"github.com/vkd/gowalker/setter"
 )
 
-// Tag of a struct field.
 type Tag string
 
-var _ Setter = Tag("")
+func (t Tag) Name() string {
+	return string(t)
+}
 
-// Set of walker implementation.
-func (t Tag) TrySet(value reflect.Value, field reflect.StructField, _ Fields) (bool, error) {
-	v, ok := field.Tag.Lookup(string(t))
+func (t Tag) Doc(field reflect.StructField, fs Fields) string {
+	v, _ := t.get(field)
+	return v
+}
+
+func (t Tag) Step(value reflect.Value, field reflect.StructField, fs Fields) (bool, error) {
+	v, ok := t.get(field)
 	if !ok {
 		return false, nil
 	}
+
 	return true, setter.SetString(value, field, v)
+}
+
+func (t Tag) get(field reflect.StructField) (string, bool) {
+	return field.Tag.Lookup(string(t))
 }
 
 var ErrRequiredField = errors.New("field is required")
 
 type Required Tag
 
-var _ Setter = Required("")
+func (r Required) Name() string {
+	return Tag(r).Name()
+}
 
-func (r Required) TrySet(value reflect.Value, field reflect.StructField, fs Fields) (bool, error) {
-	t, ok := field.Tag.Lookup(string(r))
+func (r Required) Doc(field reflect.StructField, fs Fields) string {
+	_, ok := Tag(r).get(field)
+	if ok {
+		return "*"
+	}
+	return ""
+}
+
+func (r Required) Step(value reflect.Value, field reflect.StructField, fs Fields) (bool, error) {
+	t, ok := Tag(r).get(field)
 	if !ok {
 		return false, nil
 	}

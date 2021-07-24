@@ -9,38 +9,16 @@ import (
 // ErrUnsupportedValue is raised if value is passed not as a pointer.
 var ErrUnsupportedValue = errors.New("unsupported type for value: allowed only ptr")
 
-// Setter - interface to walk through struct fields.
-type Setter interface {
-	TrySet(reflect.Value, reflect.StructField, Fields) (ok bool, _ error)
+type Walker interface {
+	Step(reflect.Value, reflect.StructField, Fields) (stop bool, _ error)
 }
 
-// SetterFunc - func implemented Walk interface.
-type SetterFunc func(reflect.Value, reflect.StructField, Fields) (bool, error)
+type WalkerFunc func(reflect.Value, reflect.StructField, Fields) (stop bool, _ error)
 
-var _ Setter = SetterFunc(nil)
+var _ Walker = WalkerFunc(nil)
 
-// Set - one step of walker.
-func (f SetterFunc) TrySet(value reflect.Value, field reflect.StructField, fs Fields) (bool, error) {
+func (f WalkerFunc) Step(value reflect.Value, field reflect.StructField, fs Fields) (bool, error) {
 	return f(value, field, fs)
-}
-
-// MultiSetterOR - set value only one (first returns true).
-func MultiSetterOR(ss ...Setter) Setter {
-	if len(ss) == 1 {
-		return ss[0]
-	}
-	return SetterFunc(func(v reflect.Value, sf reflect.StructField, f Fields) (bool, error) {
-		for _, s := range ss {
-			ok, err := s.TrySet(v, sf, f)
-			if err != nil {
-				return ok, fmt.Errorf("setter %T: %w", s, err)
-			}
-			if ok {
-				return true, nil
-			}
-		}
-		return false, nil
-	})
 }
 
 // Walk - walk struct by all public fields.
@@ -49,69 +27,57 @@ func MultiSetterOR(ss ...Setter) Setter {
 // type myStruct struct
 // var s myStruct
 // gowalker.Walk(&s, ...)
-func Walk(value interface{}, fs Fields, ss ...Setter) error {
-	for _, s := range ss {
-		_, err := walkIface(value, s, fs)
-		if err != nil {
-			if len(ss) == 1 {
-				return err
-			}
-			return fmt.Errorf("setter %T: %w", s, err)
-		}
-	}
-	return nil
+func Walk(value interface{}, fs Fields, w Walker) error {
+	_, err := walkIface(value, w, fs)
+	return err
 }
 
-func WalkFast(value interface{}, ws ...Setter) error {
-	return Walk(value, nil, ws...)
-}
-
-func walkIface(value interface{}, s Setter, fs Fields) (bool, error) {
+func walkIface(value interface{}, w Walker, fs Fields) (bool, error) {
 	v := reflect.ValueOf(value)
 	if v.Kind() != reflect.Ptr {
 		return false, ErrUnsupportedValue
 	}
-	if s == nil {
+	if w == nil {
 		return false, nil
 	}
-	return walkPrt(v, emptyField, s, fs)
+	return walkPrt(v, emptyField, w, fs)
 }
 
-func walk(value reflect.Value, field reflect.StructField, s Setter, fs Fields) (set bool, _ error) {
+func walk(value reflect.Value, field reflect.StructField, w Walker, fs Fields) (set bool, _ error) {
 	if !value.CanSet() {
 		return false, nil
 	}
 
 	kind := value.Kind()
 	if kind == reflect.Ptr {
-		return walkPrt(value, field, s, fs)
+		return walkPrt(value, field, w, fs)
 	}
 
-	if !isEmptyField(field) && s != nil {
-		ok, err := s.TrySet(value, field, fs)
+	if !isEmptyField(field) && w != nil {
+		stop, err := w.Step(value, field, fs)
 		if err != nil {
 			return false, err
 		}
-		if ok {
+		if stop {
 			return true, nil
 		}
 	}
 
 	if kind == reflect.Struct {
-		return walkStruct(value, s, fs)
+		return walkStruct(value, w, fs)
 	}
 
 	return false, nil
 }
 
-func walkPrt(value reflect.Value, field reflect.StructField, s Setter, fs Fields) (set bool, err error) {
+func walkPrt(value reflect.Value, field reflect.StructField, w Walker, fs Fields) (set bool, err error) {
 	isCreateNew := value.IsNil()
 
 	vPtr := value
 	if isCreateNew {
 		vPtr = reflect.New(value.Type().Elem())
 	}
-	set, err = walk(vPtr.Elem(), field, s, fs)
+	set, err = walk(vPtr.Elem(), field, w, fs)
 	if err != nil {
 		return false, err
 	}
@@ -121,7 +87,7 @@ func walkPrt(value reflect.Value, field reflect.StructField, s Setter, fs Fields
 	return set, nil
 }
 
-func walkStruct(value reflect.Value, s Setter, fs Fields) (set bool, err error) {
+func walkStruct(value reflect.Value, w Walker, fs Fields) (set bool, err error) {
 	tp := value.Type()
 
 	var isStructSet bool
@@ -134,7 +100,7 @@ func walkStruct(value reflect.Value, s Setter, fs Fields) (set bool, err error) 
 		if fs != nil {
 			nextFs = append(fs, tField)
 		}
-		set, err := walk(value.Field(i), tField, s, nextFs)
+		set, err := walk(value.Field(i), tField, w, nextFs)
 		if err != nil {
 			return false, err
 		}
@@ -153,4 +119,19 @@ type Fields []reflect.StructField
 
 func MakeFields(cap int) Fields {
 	return make(Fields, 0, cap)
+}
+
+type WalkersOR []Walker
+
+func (w WalkersOR) Step(value reflect.Value, field reflect.StructField, fs Fields) (bool, error) {
+	for _, s := range w {
+		stop, err := s.Step(value, field, fs)
+		if err != nil {
+			return stop, fmt.Errorf("walker %T: %w", s, err)
+		}
+		if stop {
+			return true, nil
+		}
+	}
+	return false, nil
 }
