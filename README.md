@@ -19,7 +19,11 @@ $ go get github.com/vkd/gowalker
 
 ```go
 import (
+	"log"
+	"os"
+
 	"github.com/vkd/gowalker"
+	"github.com/vkd/gowalker/config"
 )
 
 type Config struct {
@@ -32,10 +36,10 @@ type Config struct {
 }
 
 func ParseConfig() {
-	var c Config
-	err := gowalker.Config(&c,
-		gowalker.Flags("flag", gowalker.FlagNamer, os.Args),
-		gowalker.Envs("env", gowalker.EnvNamer, os.LookupEnv),
+	var cfg Config
+	err := config.Walk(&cfg, log.New(os.Stdout, "", 0),
+		gowalker.Flags(gowalker.FieldKey("flag", gowalker.Fullname("-", strings.ToLower)), os.Args),
+		gowalker.Envs(gowalker.FieldKey("env", gowalker.Fullname("_", strings.ToUpper)), os.LookupEnv),
 		gowalker.Tag("default"),
 		gowalker.Required("required"),
 	)
