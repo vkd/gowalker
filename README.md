@@ -43,5 +43,11 @@ func ParseConfig() {
 		gowalker.Tag("default"),
 		gowalker.Required("required"),
 	)
+	if err != nil {
+		if errors.Is(err, gowalker.ErrPrintHelp) {
+			return nil
+		}
+		...
+	}
 }
 ```

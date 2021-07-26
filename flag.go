@@ -50,7 +50,7 @@ func (f *Flag) Doc(field reflect.StructField, fs Fields) string {
 	return v
 }
 
-var ErrHelp = fmt.Errorf("print help")
+var ErrPrintHelp = fmt.Errorf("print help")
 
 func FlagWalk(ptr interface{}, fs Fields, kb FieldKeyer, osArgs []string) (UpdatedFields, error) {
 	var name string
@@ -80,7 +80,7 @@ func FlagWalk(ptr interface{}, fs Fields, kb FieldKeyer, osArgs []string) (Updat
 	}
 
 	if *hLong || *hShort {
-		return nil, ErrHelp
+		return nil, ErrPrintHelp
 	}
 
 	return updatedFields, nil

@@ -32,9 +32,9 @@ func Walk(cfg interface{}, l Logger, cs ...Configer) error {
 		if i, ok := s.(Initer); ok {
 			err := i.Init(cfg)
 			if err != nil {
-				if errors.Is(err, gowalker.ErrHelp) {
+				if errors.Is(err, gowalker.ErrPrintHelp) {
 					PrintHelp(cfg, l, cs...)
-					return nil
+					return err
 				}
 				return fmt.Errorf("init %T setter: %w", i, err)
 			}
