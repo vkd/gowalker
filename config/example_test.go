@@ -94,5 +94,5 @@ func ExamplePrintHelp() {
 	// metrics       | METRICS       |          |
 	// metrics-addr  | METRICS_URL   |          |
 	// metrics-label | METRICS_LABEL | gowalker |
-	// <nil>
+	// parse flags: print help
 }
