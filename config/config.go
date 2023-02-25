@@ -11,7 +11,7 @@ import (
 )
 
 func Default(cfg interface{}) error {
-	return Walk(&cfg, log.New(os.Stdout, "", 0),
+	return Walk(cfg, log.New(os.Stdout, "", 0),
 		gowalker.Flags(gowalker.FieldKey("flag", gowalker.FlagNamer), os.Args),
 		gowalker.Envs(gowalker.FieldKey("env", gowalker.EnvNamer), os.LookupEnv),
 		gowalker.Tag("default"),
