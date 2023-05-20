@@ -36,8 +36,8 @@ func ExampleConfig() {
 	// osLookupEnv := os.LookupEnv
 	osLookupEnv := func(key string) (string, bool) {
 		v, ok := map[string]string{
-			"DB_USERNAME": "postgres",
-			"METRICS_URL": "localhost:5678",
+			"MY_ORG_DB_USERNAME": "postgres",
+			"MY_ORG_METRICS_URL": "localhost:5678",
 		}[key]
 		return v, ok
 	}
@@ -47,7 +47,7 @@ func ExampleConfig() {
 
 	err := config.Walk(&cfg, nil,
 		gowalker.Flags(gowalker.FieldKey("flag", gowalker.Fullname("-", strings.ToLower)), osArgs),
-		gowalker.Envs(gowalker.FieldKey("env", gowalker.Fullname("_", strings.ToUpper)), osLookupEnv),
+		gowalker.Envs(gowalker.Prefix("MY_ORG_", gowalker.FieldKey("env", gowalker.Fullname("_", strings.ToUpper))), osLookupEnv),
 		gowalker.Tag("default"),
 		gowalker.Required("required"),
 	)

@@ -22,3 +22,20 @@ func (f *fieldKey) FieldKey(field reflect.StructField, fs Fields) (string, bool)
 	}
 	return f.Namer.Key(fs), true
 }
+
+func Prefix(p string, fk FieldKeyer) FieldKeyer {
+	return prefix{p, fk}
+}
+
+type prefix struct {
+	p  string
+	fk FieldKeyer
+}
+
+func (p prefix) FieldKey(field reflect.StructField, fs Fields) (string, bool) {
+	key, ok := p.fk.FieldKey(field, fs)
+	if !ok {
+		return key, false
+	}
+	return p.p + key, true
+}
