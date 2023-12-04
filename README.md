@@ -7,7 +7,7 @@
 [![Sourcegraph](https://sourcegraph.com/github.com/vkd/gowalker/-/badge.svg)](https://sourcegraph.com/github.com/vkd/gowalker?badge)
 [![Release](https://img.shields.io/github/release/vkd/gowalker.svg)](https://github.com/vkd/gowalker/releases)
 
-Walking throught golang struct
+Walking throught golang struct to fullfil its fields from ENV variables.
 
 ## Install
 
