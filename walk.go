@@ -96,9 +96,15 @@ func walkStruct(value reflect.Value, w Walker, fs Fields) (set bool, err error) 
 			continue
 		}
 		tField := tp.Field(i)
+
 		var nextFs Fields
-		if fs != nil {
-			nextFs = append(fs, tField)
+		switch tField.Tag.Get("walker") {
+		case "embed":
+			nextFs = fs
+		default:
+			if fs != nil {
+				nextFs = append(fs, tField)
+			}
 		}
 		set, err := walk(value.Field(i), tField, w, nextFs)
 		if err != nil {
