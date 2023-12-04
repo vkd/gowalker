@@ -54,12 +54,16 @@ func walk(value reflect.Value, field reflect.StructField, w Walker, fs Fields) (
 	}
 
 	if !isEmptyField(field) && w != nil {
-		stop, err := w.Step(value, field, fs)
-		if err != nil {
-			return false, err
-		}
-		if stop {
-			return true, nil
+		switch field.Tag.Get("walker") {
+		case "embed":
+		default:
+			stop, err := w.Step(value, field, fs)
+			if err != nil {
+				return false, err
+			}
+			if stop {
+				return true, nil
+			}
 		}
 	}
 

@@ -53,10 +53,12 @@ func ExamplePrintHelp() {
 		Name    string
 		Timeout time.Duration `default:"3s"`
 
-		DB struct {
-			Username string `required:""`
-			Password string `required:""`
-		}
+		Wrap struct {
+			DB struct {
+				Username string `required:""`
+				Password string `required:""`
+			}
+		} `walker:"embed"`
 
 		Metrics struct {
 			Addr  string `env:"METRICS_URL"`
