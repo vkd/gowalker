@@ -12,6 +12,10 @@ type Logger interface {
 	Print(...interface{})
 }
 
+type LoggerFunc func(args ...interface{})
+
+func (f LoggerFunc) Print(args ...interface{}) { f(args...) }
+
 func PrintHelp(cfg interface{}, log Logger, cs ...Configer) {
 	if log == nil {
 		return
