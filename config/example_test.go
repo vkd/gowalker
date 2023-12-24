@@ -10,7 +10,7 @@ import (
 	"github.com/vkd/gowalker"
 )
 
-func ExampleConfig() {
+func Example() {
 	var cfg struct {
 		Name    string
 		Timeout time.Duration `default:"3s"`
@@ -97,7 +97,7 @@ func ExamplePrintHelp() {
 	// parse flags: print help
 }
 
-func ExampleConfigInline() {
+func Example_embed() {
 	var cfg struct {
 		Name    string
 		Timeout time.Duration `default:"3s"`

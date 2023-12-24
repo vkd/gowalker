@@ -18,7 +18,7 @@ func (c *titleName) SetString(s string) error {
 	return nil
 }
 
-func ExampleConfig() {
+func Example() {
 	var cfg struct {
 		Name    titleName
 		Timeout time.Duration `default:"3s"`
