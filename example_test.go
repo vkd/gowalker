@@ -9,12 +9,14 @@ import (
 	"github.com/vkd/gowalker"
 	"github.com/vkd/gowalker/config"
 	"github.com/vkd/gowalker/setter"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 type titleName string
 
 func (c *titleName) SetString(s string) error {
-	*c = titleName(strings.Title(s) + "!")
+	*c = titleName(cases.Title(language.Und).String(s) + "!")
 	return nil
 }
 
