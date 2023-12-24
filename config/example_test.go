@@ -90,10 +90,8 @@ func ExamplePrintHelp() {
 	// ------------- | ------------- | -------- | --------
 	// name          | NAME          |          |
 	// timeout       | TIMEOUT       | 3s       |
-	// db            | DB            |          |
 	// db-username   | DB_USERNAME   |          | *
 	// db-password   | DB_PASSWORD   |          | *
-	// metrics       | METRICS       |          |
 	// metrics-addr  | METRICS_URL   |          |
 	// metrics-label | METRICS_LABEL | gowalker |
 	// parse flags: print help

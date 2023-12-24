@@ -99,10 +99,12 @@ func ExampleWalk_collectAllPublicFields() {
 			URL  string
 			Port int
 		}
+
+		StartedAt time.Time
 	}
 
 	var fs visitedFields
 	err := gowalker.Walk(&config, gowalker.MakeFields(2), &fs)
 	fmt.Printf("fields: %v, %v", fs, err)
-	// Output: fields: [name port db db-url db-port], <nil>
+	// Output: fields: [name port db-url db-port startedat], <nil>
 }

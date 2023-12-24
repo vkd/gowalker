@@ -12,32 +12,30 @@ func TestWalkBaseStruct(t *testing.T) {
 		ID   *struct {
 			Number int
 		}
-		sex string
+		sex        string
+		StringData testTypeSetStringer
+		Data       testType
 	}
 	expectVisited := map[string]int{
-		"Name":   1,
-		"ID":     1,
-		"Number": 1,
+		"Name":       1,
+		"Number":     1,
+		"StringData": 1,
+		"A":          1,
+		"B":          1,
+		"Data":       1,
 	}
 	testWalkStruct(t, &s, nil, expectVisited, nil)
 }
 
-func TestWalkStructSet(t *testing.T) {
-	var s struct {
-		ID *struct {
-			Number int
-		}
-	}
-	fn := func(value reflect.Value, field reflect.StructField, _ Fields) (bool, error) {
-		if field.Name == "ID" {
-			return true, nil
-		}
-		return false, nil
-	}
-	expectVisited := map[string]int{
-		"ID": 1,
-	}
-	testWalkStruct(t, &s, WalkerFunc(fn), expectVisited, nil)
+type testTypeSetStringer struct {
+	A string
+	B int
+}
+
+func (t *testTypeSetStringer) SetString(s string) error { return nil }
+
+type testType struct {
+	c int //nolint:unused // ignored by walker
 }
 
 func TestWalkFuncError(t *testing.T) {
@@ -54,7 +52,7 @@ func TestWalkFuncError(t *testing.T) {
 	testWalkStruct(t, &s, WalkerFunc(fn), expectVisited, expectedErr)
 }
 
-func testWalkStruct(t *testing.T, value interface{}, w Walker, expectVisited map[string]int, expectedErr error) {
+func testWalkStruct(t *testing.T, value interface{}, w Walker, expectVisited map[string]int, expectedErr error, opts ...Option) {
 	visitedNames := make(map[string]int)
 
 	err := Walk(value, make(Fields, 0, 4), WalkerFunc(func(value reflect.Value, field reflect.StructField, fs Fields) (bool, error) {
@@ -63,7 +61,7 @@ func testWalkStruct(t *testing.T, value interface{}, w Walker, expectVisited map
 			return false, nil
 		}
 		return w.Step(value, field, fs)
-	}))
+	}), opts...)
 	if !errors.Is(err, expectedErr) {
 		t.Errorf("Not expected error: %v", err)
 	}
@@ -88,8 +86,6 @@ func TestWalkWrap(t *testing.T) {
 	}
 	visitedNames := visitedNames{visits: make(map[string]int)}
 	expectVisited := map[string]int{
-		"Document":           1,
-		"Document.ID":        1,
 		"Document.ID.Number": 1,
 	}
 
