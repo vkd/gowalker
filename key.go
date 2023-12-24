@@ -3,7 +3,7 @@ package gowalker
 import "reflect"
 
 type FieldKeyer interface {
-	FieldKey(reflect.StructField, Fields) (string, bool)
+	FieldKey(reflect.StructField, Fields) string
 }
 
 func FieldKey(t Tag, namer Namer) FieldKeyer {
@@ -15,12 +15,12 @@ type fieldKey struct {
 	Namer
 }
 
-func (f *fieldKey) FieldKey(field reflect.StructField, fs Fields) (string, bool) {
+func (f *fieldKey) FieldKey(field reflect.StructField, fs Fields) string {
 	key, ok := f.Tag.get(field)
 	if ok {
-		return key, true
+		return key
 	}
-	return f.Namer.Key(fs), true
+	return f.Namer.Key(fs)
 }
 
 func Prefix(p string, fk FieldKeyer) FieldKeyer {
@@ -32,10 +32,6 @@ type prefix struct {
 	fk FieldKeyer
 }
 
-func (p prefix) FieldKey(field reflect.StructField, fs Fields) (string, bool) {
-	key, ok := p.fk.FieldKey(field, fs)
-	if !ok {
-		return key, false
-	}
-	return p.p + key, true
+func (p prefix) FieldKey(field reflect.StructField, fs Fields) string {
+	return p.p + p.fk.FieldKey(field, fs)
 }

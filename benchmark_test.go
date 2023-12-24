@@ -105,10 +105,7 @@ type MapStringSource map[string]string
 
 func StringSetter(fk gowalker.FieldKeyer, m MapStringSource) gowalker.Walker {
 	return gowalker.WalkerFunc(func(value reflect.Value, field reflect.StructField, fs gowalker.Fields) (stop bool, _ error) {
-		key, ok := fk.FieldKey(field, fs)
-		if !ok {
-			return false, nil
-		}
+		key := fk.FieldKey(field, fs)
 		v, ok := m[key]
 		if !ok {
 			return false, nil

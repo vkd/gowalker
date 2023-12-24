@@ -71,10 +71,7 @@ func ExampleWalk_fromMapOfStrings() {
 
 	fk := gowalker.FieldKey("uri", gowalker.DefaultNamer)
 	w := gowalker.WalkerFunc(func(value reflect.Value, field reflect.StructField, fs gowalker.Fields) (stop bool, _ error) {
-		key, ok := fk.FieldKey(field, fs)
-		if !ok {
-			return false, nil
-		}
+		key := fk.FieldKey(field, fs)
 		v, ok := uri[key]
 		if !ok {
 			return false, nil

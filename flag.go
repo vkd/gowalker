@@ -46,7 +46,7 @@ func (f *Flag) Step(v reflect.Value, sf reflect.StructField, fs Fields) (ok bool
 }
 
 func (f *Flag) Doc(field reflect.StructField, fs Fields) string {
-	v, _ := f.FieldKeyer.FieldKey(field, fs)
+	v := f.FieldKeyer.FieldKey(field, fs)
 	return v
 }
 
@@ -100,10 +100,7 @@ func (f flagWalker) Step(value reflect.Value, field reflect.StructField, fs Fiel
 		return false, nil
 	}
 
-	key, ok := f.FieldKey(field, fs)
-	if !ok {
-		return false, nil
-	}
+	key := f.FieldKey(field, fs)
 	fieldPath := KeyUpdatedFields(fs)
 
 	f.fset.Var(fieldValue{Value: value, StructField: field, fieldPath: fieldPath, updatedFields: f.updatedFields}, key, fieldPath)
