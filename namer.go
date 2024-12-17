@@ -1,7 +1,6 @@
 package gowalker
 
 import (
-	"reflect"
 	"strings"
 )
 
@@ -14,26 +13,20 @@ type appendNamer struct {
 	convFn    func(string) string
 }
 
-func (a appendNamer) FieldKey(parent string, field reflect.StructField) string {
-	name := field.Name
-	if parent != "" {
-		if a.convFn != nil {
-			return parent + a.separator + a.convFn(name)
-		}
-		return parent + a.separator + name
-	}
-	if a.convFn != nil {
-		return a.convFn(name)
-	}
-	return name
-}
-
 func (a appendNamer) Key(fs Fields) string {
-	var key string
-	for _, f := range fs {
-		key = a.FieldKey(key, f)
+	var out string
+	var sep string
+	convFn := a.convFn
+	if convFn == nil {
+		convFn = func(s string) string { return s }
 	}
-	return key
+	for _, f := range fs {
+		out += sep
+		out += convFn(f.Name)
+
+		sep = a.separator
+	}
+	return out
 }
 
 // Fullname namer.
