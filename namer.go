@@ -1,11 +1,12 @@
 package gowalker
 
 import (
+	"iter"
 	"strings"
 )
 
 type Namer interface {
-	Key(fs Fields) string
+	Key(fs iter.Seq[string]) string
 }
 
 type appendNamer struct {
@@ -13,16 +14,16 @@ type appendNamer struct {
 	convFn    func(string) string
 }
 
-func (a appendNamer) Key(fs Fields) string {
+func (a appendNamer) Key(fs iter.Seq[string]) string {
 	var out string
 	var sep string
 	convFn := a.convFn
 	if convFn == nil {
 		convFn = func(s string) string { return s }
 	}
-	for _, f := range fs {
+	for f := range fs {
 		out += sep
-		out += convFn(f.Name)
+		out += convFn(f)
 
 		sep = a.separator
 	}

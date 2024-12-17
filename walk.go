@@ -3,6 +3,7 @@ package gowalker
 import (
 	"errors"
 	"fmt"
+	"iter"
 	"reflect"
 	"time"
 
@@ -191,6 +192,16 @@ func isEmptyField(field reflect.StructField) bool {
 }
 
 type Fields []reflect.StructField
+
+func (f Fields) Names() iter.Seq[string] {
+	return func(yield func(string) bool) {
+		for _, field := range f {
+			if !yield(field.Name) {
+				return
+			}
+		}
+	}
+}
 
 func MakeFields(cap int) Fields {
 	return make(Fields, 0, cap)

@@ -124,7 +124,7 @@ func (f fieldValue) Set(s string) error {
 type UpdatedFields map[string]struct{}
 
 func KeyUpdatedFields(fs Fields) string {
-	return StructFieldNamer.Key(fs)
+	return StructFieldNamer.Key(fs.Names())
 }
 
 func (u UpdatedFields) Has(fs Fields) bool {

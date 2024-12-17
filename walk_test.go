@@ -109,7 +109,7 @@ type visitedNames struct {
 }
 
 func (v visitedNames) Step(value reflect.Value, field reflect.StructField, fs Fields) (bool, error) {
-	key := StructFieldNamer.Key(fs)
+	key := StructFieldNamer.Key(fs.Names())
 	v.visits[key]++
 	return false, nil
 }

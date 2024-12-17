@@ -20,7 +20,7 @@ func (f *fieldKey) FieldKey(field reflect.StructField, fs Fields) string {
 	if ok {
 		return key
 	}
-	return f.Namer.Key(fs)
+	return f.Namer.Key(fs.Names())
 }
 
 func Prefix(p string, fk FieldKeyer) FieldKeyer {

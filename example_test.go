@@ -88,7 +88,7 @@ func ExampleWalk_fromMapOfStrings() {
 type visitedFields []string
 
 func (f *visitedFields) Step(value reflect.Value, field reflect.StructField, fs gowalker.Fields) (set bool, err error) {
-	key := gowalker.DashToLoverNamer.Key(fs)
+	key := gowalker.DashToLoverNamer.Key(fs.Names())
 	*f = append(*f, key)
 	return false, nil
 }
