@@ -29,7 +29,7 @@ func (f *Flag) Init(ptr interface{}) error {
 	f.mx.Lock()
 	defer f.mx.Unlock()
 
-	updated, err := FlagWalk(ptr, make(Fields, 6), f.FieldKeyer, f.OsArgs)
+	updated, err := FlagWalk(ptr, make(Fields, 0, 6), f.FieldKeyer, f.OsArgs)
 	if err != nil {
 		return fmt.Errorf("parse flags: %w", err)
 	}
