@@ -11,9 +11,13 @@ import (
 )
 
 func Default(cfg interface{}) error {
+	return defaultConfig(cfg, os.Args, os.LookupEnv)
+}
+
+func defaultConfig(cfg interface{}, osArgs []string, osLookupEnv func(string) (string, bool)) error {
 	return Walk(cfg, log.New(os.Stdout, "", 0),
-		gowalker.Flags(gowalker.FieldKey("flag", gowalker.FlagNamer), os.Args),
-		gowalker.Envs(gowalker.FieldKey("env", gowalker.EnvNamer), os.LookupEnv),
+		gowalker.Flags(gowalker.FieldKey("flag", gowalker.FlagNamer), osArgs),
+		gowalker.Envs(gowalker.FieldKey("env", gowalker.EnvNamer), osLookupEnv),
 		gowalker.Tag("default"),
 		gowalker.Required("required"),
 	)
