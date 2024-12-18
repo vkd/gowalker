@@ -9,30 +9,26 @@ type Namer interface {
 	Key(fs iter.Seq[string]) string
 }
 
-type appendNamer struct {
-	separator string
-	convFn    func(string) string
-}
+type NamerFunc func(fs iter.Seq[string]) string
 
-func (a appendNamer) Key(fs iter.Seq[string]) string {
-	var out string
-	var sep string
-	convFn := a.convFn
-	if convFn == nil {
-		convFn = func(s string) string { return s }
-	}
-	for f := range fs {
-		out += sep
-		out += convFn(f)
-
-		sep = a.separator
-	}
-	return out
-}
+func (n NamerFunc) Key(fs iter.Seq[string]) string { return n(fs) }
 
 // Fullname namer.
-func Fullname(sep string, convFn func(string) string) Namer {
-	return appendNamer{sep, convFn}
+func Fullname(separator string, convFn func(string) string) Namer {
+	return NamerFunc(func(fs iter.Seq[string]) string {
+		var out string
+		var sep string
+		if convFn == nil {
+			convFn = func(s string) string { return s }
+		}
+		for f := range fs {
+			out += sep
+			out += convFn(f)
+
+			sep = separator
+		}
+		return out
+	})
 }
 
 // UpperNamer - concat a uppercase parent's name with a uppercase child's one with underscore.
