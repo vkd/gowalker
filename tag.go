@@ -3,7 +3,9 @@ package gowalker
 import (
 	"errors"
 	"fmt"
+	"iter"
 	"reflect"
+	"strings"
 
 	"github.com/vkd/gowalker/setter"
 )
@@ -30,6 +32,22 @@ func (t Tag) Step(value reflect.Value, field reflect.StructField, fs Fields) (bo
 
 func (t Tag) get(field reflect.StructField) (string, bool) {
 	return field.Tag.Lookup(string(t))
+}
+
+func (t Tag) Names(f Fields) iter.Seq[string] {
+	return func(yield func(string) bool) {
+		for _, field := range f {
+			v, ok := t.get(field)
+			if !ok {
+				v = field.Name
+			}
+			for _, vv := range strings.Split(v, " ") {
+				if !yield(vv) {
+					return
+				}
+			}
+		}
+	}
 }
 
 var ErrRequiredField = errors.New("field is required")

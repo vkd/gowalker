@@ -16,8 +16,8 @@ func Default(cfg interface{}) error {
 
 func defaultConfig(cfg interface{}, osArgs []string, osLookupEnv func(string) (string, bool)) error {
 	return Walk(cfg, log.New(os.Stdout, "", 0),
-		gowalker.Flags(gowalker.FieldKey("flag", gowalker.FlagNamer), osArgs),
-		gowalker.Envs(gowalker.FieldKey("env", gowalker.EnvNamer), osLookupEnv),
+		gowalker.Flags(gowalker.NestedFieldKey("flag", "fkey", gowalker.FlagNamer), osArgs),
+		gowalker.Envs(gowalker.NestedFieldKey("env", "fkey", gowalker.EnvNamer), osLookupEnv),
 		gowalker.Tag("default"),
 		gowalker.Required("required"),
 	)

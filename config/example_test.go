@@ -16,7 +16,7 @@ func Example() {
 		}
 
 		Metrics struct {
-			Addr  string `env:"METRICS_URL"`
+			Addr  string `fkey:"URL"`
 			Label string `default:"gowalker"`
 		}
 	}
@@ -95,7 +95,7 @@ func Example_embed() {
 		} `walker:"embed"`
 
 		Metrics struct {
-			Addr  string `env:"METRICS_URL"`
+			Addr  string `fkey:"URL"`
 			Label string `default:"gowalker"`
 		}
 	}
