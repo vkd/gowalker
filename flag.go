@@ -96,7 +96,7 @@ func (f flagWalker) Step(value reflect.Value, field reflect.StructField, fs Fiel
 	if f.fset == nil {
 		return false, nil
 	}
-	if value.Kind() == reflect.Struct {
+	if value.Kind() == reflect.Struct && !IsGoWalkerField(value) {
 		return false, nil
 	}
 

@@ -58,6 +58,19 @@ func StepOnStructFields() Option {
 	})
 }
 
+type GoWalkerFielder interface {
+	GoWalkerField()
+}
+
+func IsGoWalkerField(value reflect.Value) bool {
+	_, ok := value.Interface().(GoWalkerFielder)
+	if ok {
+		return true
+	}
+	_, ok = value.Interface().(setter.GoWalkerMayber)
+	return ok
+}
+
 func walkIface(value interface{}, w Walker, fs Fields, cfg config) error {
 	v := reflect.ValueOf(value)
 	if v.Kind() != reflect.Ptr {
@@ -80,7 +93,7 @@ func walk(value reflect.Value, field reflect.StructField, w Walker, fs Fields, c
 		return walkPrt(value, field, w, fs, cfg)
 	}
 
-	if kind == reflect.Struct {
+	if kind == reflect.Struct && !IsGoWalkerField(value) {
 		var err error
 		stepped, stop, err = walkStruct(value, w, fs, cfg)
 		if err != nil {
@@ -104,6 +117,7 @@ func walk(value reflect.Value, field reflect.StructField, w Walker, fs Fields, c
 }
 
 var setStringerType = reflect.TypeOf((*setter.SetStringer)(nil)).Elem()
+var setterType = reflect.TypeOf((*setter.Setter)(nil)).Elem()
 
 func step(value reflect.Value, field reflect.StructField, w Walker, fs Fields, cfg config, stepped bool) (steppedOut bool, stop bool, _ error) {
 	if field.Tag.Get("walker") == "embed" {
@@ -117,8 +131,13 @@ func step(value reflect.Value, field reflect.StructField, w Walker, fs Fields, c
 
 		switch {
 		case isTime:
+
 		case value.Type().Implements(setStringerType):
 		case value.CanAddr() && value.Addr().Type().Implements(setStringerType):
+
+		case value.Type().Implements(setterType):
+		case value.CanAddr() && value.Addr().Type().Implements(setterType):
+
 		default:
 			if stepped && !cfg.StepOnStructFields {
 				return stepped, false, nil

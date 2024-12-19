@@ -82,6 +82,42 @@ func ExamplePrintHelp() {
 	// parse flags: print help
 }
 
+func ExampleMaybe() {
+	var cfg struct {
+		Name    maybe[string]
+		Timeout maybe[time.Duration] `default:"3s"`
+
+		Metrics struct {
+			Addr  maybe[string] `fkey:"URL"`
+			Label maybe[string] `default:"gowalker"`
+			Tag   maybe[string]
+		}
+	}
+
+	// osLookupEnv := os.LookupEnv
+	osLookupEnv := func(key string) (string, bool) {
+		v, ok := map[string]string{
+			"DB_USERNAME": "postgres",
+			"METRICS_URL": "localhost:5678",
+		}[key]
+		return v, ok
+	}
+
+	// osArgs := os.Args
+	osArgs := []string{"gowalker", "--timeout=5s", "--name=Gowalker"}
+
+	err := defaultConfig(&cfg, osArgs, osLookupEnv)
+	fmt.Printf("%v, %v, %v, %v, %v", cfg.Metrics.Addr.IsSet, cfg.Metrics.Label.IsSet, cfg.Metrics.Tag.IsSet, cfg.Timeout, err)
+	// Output: true, true, false, {true 5s}, <nil>
+}
+
+type maybe[T any] struct {
+	IsSet bool
+	Value T
+}
+
+func (m maybe[T]) GoWalkerMaybe() {}
+
 func Example_embed() {
 	var cfg struct {
 		Name    string

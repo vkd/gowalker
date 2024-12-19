@@ -15,10 +15,20 @@ var (
 	ErrNotImplemented = errors.New("not implemented")
 	// ErrNotSetField - field cannot be set.
 	ErrNotSetField = errors.New("cannot be set")
+
+	ErrIncorrectMaybeType = errors.New("incorrect Maybe type structure")
 )
 
 type SetStringer interface {
 	SetString(string) error
+}
+
+type Setter interface {
+	Set(string)
+}
+
+type GoWalkerMayber interface {
+	GoWalkerMaybe()
 }
 
 // SetString - set value by string
@@ -31,6 +41,28 @@ func SetString(value reflect.Value, field reflect.StructField, str string) error
 
 	if s, ok := value.Addr().Interface().(SetStringer); ok {
 		return s.SetString(str)
+	}
+
+	if s, ok := value.Addr().Interface().(Setter); ok {
+		s.Set(str)
+		return nil
+	}
+
+	if _, ok := value.Addr().Interface().(GoWalkerMayber); ok {
+		isSetField := value.FieldByName("IsSet")
+		if !isSetField.IsValid() {
+			return ErrIncorrectMaybeType
+		}
+		isSetField.SetBool(true)
+
+		value = value.FieldByName("Value")
+		if !value.IsValid() {
+			return ErrIncorrectMaybeType
+		}
+		field, ok = field.Type.FieldByName("Value")
+		if !ok {
+			return ErrIncorrectMaybeType
+		}
 	}
 
 	switch value.Kind() {
