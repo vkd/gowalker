@@ -18,7 +18,7 @@ func defaultConfig(cfg interface{}, osArgs []string, osLookupEnv func(string) (s
 	return Walk(cfg, log.New(os.Stdout, "", 0),
 		gowalker.Flags(gowalker.NestedFieldKey("flag", "fkey", gowalker.FlagNamer), osArgs),
 		gowalker.Envs(gowalker.NestedFieldKey("env", "fkey", gowalker.EnvNamer), osLookupEnv),
-		gowalker.Tag("default"),
+		gowalker.DefaultTag("default"),
 		gowalker.Required("required"),
 	)
 }

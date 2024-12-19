@@ -35,6 +35,14 @@ type GoWalkerMayber interface {
 //
 // Not implemented kinds: Complex, Chan.
 func SetString(value reflect.Value, field reflect.StructField, str string) error {
+	return setString(value, field, str, true)
+}
+
+func SetStringSilent(value reflect.Value, field reflect.StructField, str string) error {
+	return setString(value, field, str, false)
+}
+
+func setString(value reflect.Value, field reflect.StructField, str string, markAsSet bool) error {
 	if !value.CanSet() {
 		return ErrNotSetField
 	}
@@ -53,7 +61,9 @@ func SetString(value reflect.Value, field reflect.StructField, str string) error
 		if !isSetField.IsValid() {
 			return ErrIncorrectMaybeType
 		}
-		isSetField.SetBool(true)
+		if markAsSet {
+			isSetField.SetBool(true)
+		}
 
 		value = value.FieldByName("Value")
 		if !value.IsValid() {

@@ -50,6 +50,25 @@ func (t Tag) Names(f Fields) iter.Seq[string] {
 	}
 }
 
+type DefaultTag Tag
+
+func (t DefaultTag) Name() string {
+	return Tag(t).Name()
+}
+
+func (t DefaultTag) Doc(field reflect.StructField, fs Fields) string {
+	return Tag(t).Doc(field, fs)
+}
+
+func (t DefaultTag) Step(value reflect.Value, field reflect.StructField, fs Fields) (bool, error) {
+	v, ok := Tag(t).get(field)
+	if !ok {
+		return false, nil
+	}
+
+	return true, setter.SetStringSilent(value, field, v)
+}
+
 var ErrRequiredField = errors.New("field is required")
 
 type Required Tag

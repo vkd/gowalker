@@ -108,7 +108,7 @@ func ExampleMaybe() {
 
 	err := defaultConfig(&cfg, osArgs, osLookupEnv)
 	fmt.Printf("%v, %v, %v, %v, %v", cfg.Metrics.Addr.IsSet, cfg.Metrics.Label.IsSet, cfg.Metrics.Tag.IsSet, cfg.Timeout, err)
-	// Output: true, true, false, {true 5s}, <nil>
+	// Output: true, false, false, {true 5s}, <nil>
 }
 
 type maybe[T any] struct {
